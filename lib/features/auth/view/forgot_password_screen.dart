@@ -58,9 +58,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
         },
       );
     } else {
+      final isAr = Localizations.localeOf(context).languageCode == 'ar';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(authProvider.errorMessage ?? 'فشل إرسال رمز التحقق'),
+          content: Text(authProvider.errorMessage ?? (isAr ? 'فشل إرسال رمز التحقق' : 'Failed to send a verification code')),
           backgroundColor: AppColors.destructive,
           behavior: SnackBarBehavior.floating,
         ),
@@ -70,11 +71,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
     return Scaffold(
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [Color(0xFFE3F2FD), Colors.white],
             begin: Alignment.topCenter,
@@ -86,29 +88,29 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(24, 48, 24, 32),
+                padding: EdgeInsets.fromLTRB(24, 48, 24, 32),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
-                      child: const Icon(
+                      child: Icon(
                         Icons.arrow_back_ios_rounded,
                         size: 24,
                         color: AppColors.primary,
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: 24),
                     Text(
-                      'نسيت كلمة المرور؟',
+                      (isAr ? 'نسيت كلمة المرور؟' : 'Forgot Password?'),
                       style: AppTextStyles.h1.copyWith(
                         color: Theme.of(context).textTheme.displayLarge?.color,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     Text(
-                      'أدخل رقم هاتفك وسنرسل لك رمز التحقق',
+                      (isAr ? 'أدخل رقم هاتفك وسنرسل لك رمز التحقق' : 'Enter your phone number and we\'ll send you a verification code'),
                       style: AppTextStyles.body.copyWith(
                         color: Theme.of(context).hintColor,
                       ),
@@ -119,22 +121,22 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
 
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  padding: EdgeInsets.symmetric(horizontal: 24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       AppTextField(
                         controller: _phoneController,
-                        label: 'رقم الهاتف',
+                        label: (isAr ? 'رقم الهاتف' : 'Phone'),
                         hint: '+966 50 123 4567',
                         prefixIcon: Icons.phone_outlined,
                         keyboardType: TextInputType.phone,
                       ),
-                      const SizedBox(height: 24),
+                      SizedBox(height: 24),
 
                       AppButton(
                         text:
-                            _isLoading ? 'جاري الإرسال...' : 'إرسال رمز التحقق',
+                            _isLoading ? (isAr ? 'جاري الإرسال...' : 'Sending...') : (isAr ? 'إرسال رمز التحقق' : 'Send OTP'),
                         onPressed:
                             _phoneController.text.trim().isEmpty && !_isLoading
                                 ? null
@@ -142,19 +144,19 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                         isLoading: _isLoading,
                       ),
 
-                      const SizedBox(height: 32),
+                      SizedBox(height: 32),
 
                       Container(
-                        padding: const EdgeInsets.all(16),
+                        padding: EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: const Color(0xFFE3F2FD),
+                            color: Color(0xFFE3F2FD),
                           ),
                         ),
                         child: Text(
-                          'سيتم إرسال رمز التحقق عبر رسالة نصية إلى رقم هاتفك. قد يستغرق الأمر بضع دقائق.',
+                          (isAr ? 'سيتم إرسال رمز التحقق عبر رسالة نصية إلى رقم هاتفك. قد يستغرق الأمر بضع دقائق.' : 'The verification code will be sent via text message to your phone number. It may take a few minutes.'),
                           style: AppTextStyles.bodySmall.copyWith(
                             color: Theme.of(context).hintColor,
                           ),

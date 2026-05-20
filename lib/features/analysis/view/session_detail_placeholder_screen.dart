@@ -22,21 +22,23 @@ class _SessionDetailPlaceholderScreenState
   late TabController _tabController;
   int _chartType = 0; // 0 = Bars, 1 = Pie
 
+  bool get _isAr => Localizations.localeOf(context).languageCode == 'ar';
+
   // Fallback data when API data is not yet loaded or empty
-  final SessionAnalysisModel _fallbackData = SessionAnalysisModel(
+  SessionAnalysisModel get _fallbackData => SessionAnalysisModel(
     id: '',
-    title: 'جاري التحميل...',
-    summary: 'لا توجد بيانات متاحة حالياً.',
-    duration: '-- دقيقة',
+    title: _isAr ? 'جاري التحميل...' : 'Loading...',
+    summary: _isAr ? 'لا توجد بيانات متاحة حالياً.' : 'No data available.',
+    duration: _isAr ? '-- دقيقة' : '-- mins',
     engagementLevel: '--',
     recommendations: [],
     emotionDistribution: [
-      EmotionData('happy', '😊', 'سعيد', 0.0, const Color(0xFF22C55E)),
-      EmotionData('neutral', '😐', 'محايد', 0.0, const Color(0xFF94A3B8)),
-      EmotionData('sad', '😢', 'حزين', 0.0, const Color(0xFFEF4444)),
-      EmotionData('angry', '😠', 'غاضب', 0.0, const Color(0xFFEAB308)),
-      EmotionData('surprise', '😲', 'متفاجئ', 0.0, const Color(0xFFA855F7)),
-      EmotionData('fear', '😨', 'خائف', 0.0, const Color(0xFFF97316)),
+      EmotionData('happy', '😊', _isAr ? 'سعيد' : 'Happy', 0.0, const Color(0xFF22C55E)),
+      EmotionData('neutral', '😐', _isAr ? 'محايد' : 'Neutral', 0.0, const Color(0xFF94A3B8)),
+      EmotionData('sad', '😢', _isAr ? 'حزين' : 'Sad', 0.0, const Color(0xFFEF4444)),
+      EmotionData('angry', '😠', _isAr ? 'غاضب' : 'Angry', 0.0, const Color(0xFFEAB308)),
+      EmotionData('surprise', '😲', _isAr ? 'متفاجئ' : 'Surprised', 0.0, const Color(0xFFA855F7)),
+      EmotionData('fear', '😨', _isAr ? 'خائف' : 'Fear', 0.0, const Color(0xFFF97316)),
     ],
     focusedPercentage: 0.0,
     notFocusedPercentage: 1.0,
@@ -68,7 +70,9 @@ class _SessionDetailPlaceholderScreenState
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
-          widget.displayIndex != null ? 'جلسة #${widget.displayIndex}' : _sessionData.title,
+          widget.displayIndex != null 
+            ? (_isAr ? 'جلسة #${widget.displayIndex}' : 'Session #${widget.displayIndex}') 
+            : _sessionData.title,
           style: AppTextStyles.h2.copyWith(fontWeight: FontWeight.w700),
         ),
         bottom: TabBar(
@@ -79,11 +83,11 @@ class _SessionDetailPlaceholderScreenState
           indicatorWeight: 3,
           labelStyle: AppTextStyles.h3.copyWith(fontWeight: FontWeight.bold),
           unselectedLabelStyle: AppTextStyles.body,
-          tabs: const [
-            Tab(text: "التحليل السلوكي والانفعالي", icon: Icon(Icons.analytics_outlined)),
+          tabs: [
+            Tab(text: _isAr ? "التحليل السلوكي والانفعالي" : "Behavioral Analysis", icon: const Icon(Icons.analytics_outlined)),
             Tab(
-                text: "التقرير الطبي",
-                icon: Icon(Icons.medical_information_outlined)),
+                text: _isAr ? "التقرير الطبي" : "Medical Report",
+                icon: const Icon(Icons.medical_information_outlined)),
           ],
         ),
       ),
@@ -122,7 +126,7 @@ class _SessionDetailPlaceholderScreenState
     final notFocusPct = 100 - focusPct;
 
     // Determine dominant gaze direction
-    String dominantGaze = 'المنتصف';
+    String dominantGaze = _isAr ? 'المنتصف' : 'Center';
     if (_sessionData.gazeDistribution.isNotEmpty) {
       String topKey = '';
       double topVal = -1;
@@ -133,11 +137,11 @@ class _SessionDetailPlaceholderScreenState
         }
       });
       switch (topKey.toUpperCase()) {
-        case 'CENTER': dominantGaze = 'المنتصف'; break;
-        case 'UP': dominantGaze = 'أعلى'; break;
-        case 'DOWN': dominantGaze = 'أسفل'; break;
-        case 'LEFT': dominantGaze = 'يسار'; break;
-        case 'RIGHT': dominantGaze = 'يمين'; break;
+        case 'CENTER': dominantGaze = _isAr ? 'المنتصف' : 'Center'; break;
+        case 'UP': dominantGaze = _isAr ? 'أعلى' : 'Up'; break;
+        case 'DOWN': dominantGaze = _isAr ? 'أسفل' : 'Down'; break;
+        case 'LEFT': dominantGaze = _isAr ? 'يسار' : 'Left'; break;
+        case 'RIGHT': dominantGaze = _isAr ? 'يمين' : 'Right'; break;
         default: dominantGaze = topKey;
       }
     }
@@ -174,7 +178,7 @@ class _SessionDetailPlaceholderScreenState
               ),
               const SizedBox(width: 12),
               Text(
-                'تحليل التركيز',
+                _isAr ? 'تحليل التركيز' : 'Focus Analysis',
                 style: AppTextStyles.h3.copyWith(fontWeight: FontWeight.w600),
               ),
             ],
@@ -196,7 +200,7 @@ class _SessionDetailPlaceholderScreenState
                     ),
                   ),
                   Text(
-                    'مُركز',
+                    _isAr ? 'مُركز' : 'Focused',
                     style: AppTextStyles.body.copyWith(
                       fontWeight: FontWeight.bold,
                       color: const Color(0xFF10B981),
@@ -238,7 +242,7 @@ class _SessionDetailPlaceholderScreenState
                     ),
                   ),
                   Text(
-                    'مشتت',
+                    _isAr ? 'مشتت' : 'Distracted',
                     style: AppTextStyles.body.copyWith(
                       fontWeight: FontWeight.bold,
                       color: const Color(0xFF94A3B8),
@@ -264,7 +268,7 @@ class _SessionDetailPlaceholderScreenState
                 const Icon(Icons.center_focus_strong_rounded, size: 18, color: Color(0xFF059669)),
                 const SizedBox(width: 8),
                 Text(
-                  'اتجاه النظر الغالب: $dominantGaze',
+                  _isAr ? 'اتجاه النظر الغالب: $dominantGaze' : 'Dominant Gaze: $dominantGaze',
                   style: const TextStyle(
                     fontFamily: 'Cairo',
                     fontWeight: FontWeight.w600,
@@ -311,7 +315,7 @@ class _SessionDetailPlaceholderScreenState
               ),
               const SizedBox(width: 12),
               Text(
-                'توزيع المشاعر',
+                _isAr ? 'توزيع المشاعر' : 'Emotion Distribution',
                 style: AppTextStyles.h3.copyWith(fontWeight: FontWeight.w600),
               ),
             ],
@@ -319,15 +323,15 @@ class _SessionDetailPlaceholderScreenState
           const SizedBox(height: 16),
           Center(
             child: SegmentedButton<int>(
-              segments: const [
+              segments: [
                 ButtonSegment(
                     value: 0,
-                    icon: Icon(Icons.bar_chart_rounded),
-                    label: Text('أشرطة')),
+                    icon: const Icon(Icons.bar_chart_rounded),
+                    label: Text(_isAr ? 'أشرطة' : 'Bars')),
                 ButtonSegment(
                     value: 1,
-                    icon: Icon(Icons.pie_chart_rounded),
-                    label: Text('دائري')),
+                    icon: const Icon(Icons.pie_chart_rounded),
+                    label: Text(_isAr ? 'دائري' : 'Pie')),
               ],
               selected: {_chartType},
               onSelectionChanged: (Set<int> newSelection) {
@@ -363,7 +367,7 @@ class _SessionDetailPlaceholderScreenState
               const SizedBox(width: 8),
               SizedBox(
                 width: 60,
-                child: Text(e.label, style: AppTextStyles.bodySmall),
+                child: Text(_getEmotionLabel(e.id, e.label), style: AppTextStyles.bodySmall),
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -421,7 +425,7 @@ class _SessionDetailPlaceholderScreenState
                     ),
                   ),
                   Text(
-                    topEmotion != null ? topEmotion.label : 'تفاعل',
+                    topEmotion != null ? _getEmotionLabel(topEmotion.id, topEmotion.label) : (_isAr ? 'تفاعل' : 'Interaction'),
                     style: AppTextStyles.caption
                         .copyWith(fontWeight: FontWeight.bold),
                   ),
@@ -478,7 +482,7 @@ class _SessionDetailPlaceholderScreenState
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  e.label,
+                  _getEmotionLabel(e.id, e.label),
                   style: AppTextStyles.caption
                       .copyWith(fontWeight: FontWeight.w600),
                 ),
@@ -515,21 +519,23 @@ class _SessionDetailPlaceholderScreenState
 
     // Focus metrics
     final focusPct = ((_sessionData.averageFocus ?? _sessionData.focusedPercentage) * 100).toInt();
-    final focusStatus = focusPct > 70 ? 'مستقر' : focusPct > 40 ? 'متوسط' : 'ضعيف';
+    final focusStatus = focusPct > 70 
+        ? (_isAr ? 'مستقر' : 'Stable') 
+        : focusPct > 40 ? (_isAr ? 'متوسط' : 'Average') : (_isAr ? 'ضعيف' : 'Weak');
     final focusStatusColor = focusPct > 70 ? const Color(0xFF22C55E) : focusPct > 40 ? const Color(0xFFF59E0B) : const Color(0xFFEF4444);
 
     // Emotion status
-    final emotionLabel = topEmotion?.label ?? 'غير محددة';
+    final emotionLabel = topEmotion != null ? _getEmotionLabel(topEmotion.id, topEmotion.label) : (_isAr ? 'غير محددة' : 'Not specified');
     final emotionPct = ((topEmotion?.percentage ?? 0.0) * 100).toInt();
 
     // Voice status
     String voiceStatus;
     Color voiceStatusColor;
     if (hasVoiceData) {
-      voiceStatus = 'تفاعل صوتي';
+      voiceStatus = _isAr ? 'تفاعل صوتي' : 'Vocal Interaction';
       voiceStatusColor = const Color(0xFF3B82F6);
     } else {
-      voiceStatus = 'بصري فقط';
+      voiceStatus = _isAr ? 'بصري فقط' : 'Visual Only';
       voiceStatusColor = const Color(0xFF94A3B8);
     }
 
@@ -560,7 +566,9 @@ class _SessionDetailPlaceholderScreenState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        widget.displayIndex != null ? 'تقرير جلسة #${widget.displayIndex}' : 'التقرير الطبي',
+                        widget.displayIndex != null 
+                          ? (_isAr ? 'تقرير جلسة #${widget.displayIndex}' : 'Session Report #${widget.displayIndex}') 
+                          : (_isAr ? 'التقرير الطبي' : 'Medical Report'),
                         style: const TextStyle(
                           fontFamily: 'Cairo',
                           fontWeight: FontWeight.bold,
@@ -588,26 +596,30 @@ class _SessionDetailPlaceholderScreenState
           // ── Clinical Items ──────────────────────────────────
           _buildReportItem(
             icon: Icons.sentiment_satisfied_alt_rounded,
-            title: 'الحالة المزاجية الغالبة',
+            title: _isAr ? 'الحالة المزاجية الغالبة' : 'Dominant Mood',
             subtitle: 'Emotional Intelligence Model',
             trailing: _buildStatusChip(emotionLabel, topEmotion?.color ?? const Color(0xFF22C55E)),
-            content: 'الحالة المزاجية الغالبة: $emotionLabel بنسبة $emotionPct%.',
+            content: _isAr 
+                ? 'الحالة المزاجية الغالبة: $emotionLabel بنسبة $emotionPct%.'
+                : 'Dominant Mood: $emotionLabel at $emotionPct%.',
           ),
           _buildReportItem(
             icon: Icons.record_voice_over_rounded,
-            title: 'التدفق الصوتي والقصص',
+            title: _isAr ? 'التدفق الصوتي والقصص' : 'Voice Flow & Stories',
             subtitle: 'Educational Voice Flow Model',
             trailing: _buildStatusChip(voiceStatus, voiceStatusColor),
             content: hasVoiceData
                 ? _buildVoiceContent(hasValidSpeech, speechText, hasValidTrait, storyTrait, isCorrect)
-                : 'لم يتم التقاط أي تفاعل صوتي خلال هذه الجلسة.',
+                : (_isAr ? 'لم يتم التقاط أي تفاعل صوتي خلال هذه الجلسة.' : 'No vocal interaction captured during this session.'),
           ),
           _buildReportItem(
             icon: Icons.visibility_rounded,
-            title: 'التواصل البصري',
+            title: _isAr ? 'التواصل البصري' : 'Eye Contact',
             subtitle: 'Eye Tracking Model',
             trailing: _buildStatusChip(focusStatus, focusStatusColor),
-            content: 'تمركزت نقاط النظر نحو الروبوت بنسبة $focusPct%.',
+            content: _isAr 
+                ? 'تمركزت نقاط النظر نحو الروبوت بنسبة $focusPct%.'
+                : 'Gaze was focused on the robot at $focusPct%.',
           ),
 
           // ── Recommendations ──────────────────────────────────
@@ -615,7 +627,7 @@ class _SessionDetailPlaceholderScreenState
             const SizedBox(height: 8),
             _buildReportItem(
               icon: Icons.lightbulb_outline_rounded,
-              title: 'التوصيات',
+              title: _isAr ? 'التوصيات' : 'Recommendations',
               subtitle: 'AI-Generated Recommendations',
               trailing: _buildStatusChip('${_sessionData.recommendations.length}', const Color(0xFF8B5CF6)),
               content: _sessionData.recommendations.map((r) => '• $r').join('\n'),
@@ -629,17 +641,18 @@ class _SessionDetailPlaceholderScreenState
             child: ElevatedButton.icon(
               onPressed: () {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('جاري تجهيز ميزة الطباعة',
-                        style: TextStyle(fontFamily: 'Cairo')),
+                  SnackBar(
+                    content: Text(
+                        _isAr ? 'جاري تجهيز ميزة الطباعة' : 'Print feature is being prepared',
+                        style: const TextStyle(fontFamily: 'Cairo')),
                     backgroundColor: AppColors.primary,
                     behavior: SnackBarBehavior.floating,
                   ),
                 );
               },
               icon: const Icon(Icons.picture_as_pdf_rounded),
-              label: const Text('تصدير التقرير كـ PDF',
-                  style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 15)),
+              label: Text(_isAr ? 'تصدير التقرير كـ PDF' : 'Export Report as PDF',
+                  style: const TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 15)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
@@ -655,6 +668,20 @@ class _SessionDetailPlaceholderScreenState
   }
 
   String _buildVoiceContent(bool hasValidSpeech, String speechText, bool hasValidTrait, String storyTrait, bool? isCorrect) {
+    if (!_isAr) {
+      String content = 'The patient showed vocal interaction.';
+      if (hasValidSpeech) {
+        content += ' Said: "$speechText".';
+      }
+      if (hasValidTrait) {
+        content += ' Story trait: $storyTrait.';
+      }
+      if (isCorrect != null) {
+        content += ' Interaction was ${(isCorrect ? "correct" : "incorrect")}.';
+      }
+      return content;
+    }
+
     String content = 'أظهر المريض تفاعلاً صوتياً.';
     if (hasValidSpeech) {
       content += ' حيث ذكر: "$speechText".';
@@ -666,6 +693,24 @@ class _SessionDetailPlaceholderScreenState
       content += ' وكانت استجابته للأسئلة التفاعلية ${(isCorrect ? "صحيحة" : "خاطئة")}.';
     }
     return content;
+  }
+
+  String _getEmotionLabel(String id, String defaultLabel) {
+    if (_isAr) return defaultLabel;
+    switch (id.toLowerCase()) {
+      case 'happy': return 'Happy';
+      case 'sad': return 'Sad';
+      case 'angry': return 'Angry';
+      case 'fear':
+      case 'fearful': return 'Fear';
+      case 'surprise':
+      case 'surprised': return 'Surprised';
+      case 'disgust':
+      case 'disgusted': return 'Disgust';
+      case 'neutral': return 'Neutral';
+      case 'calm': return 'Calm';
+      default: return defaultLabel;
+    }
   }
 
   Widget _buildStatusChip(String label, Color color) {

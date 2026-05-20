@@ -71,15 +71,88 @@ class AIMessageBubble extends StatelessWidget {
                     ),
                     child: message.hasError
                         ? _buildErrorMessage()
-                        : Text(
-                            message.content,
-                            style: AppTextStyles.body.copyWith(
-                              height: 1.5, // Better readability
-                              color: isUser
-                                  ? const Color(0xFF1F2937) // Navy/Dark Gray
-                                  : Colors.white,
-                            ),
-                          ),
+                        : isUser
+                            ? Text(
+                                message.content,
+                                textDirection: TextDirection.rtl,
+                                textAlign: TextAlign.start,
+                                style: AppTextStyles.body.copyWith(
+                                  height: 1.5,
+                                  color: const Color(0xFF1F2937),
+                                ),
+                              )
+                            : Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (message.categoryLabel != null || message.urgency != null)
+                                    Padding(
+                                      padding: const EdgeInsets.only(bottom: 8),
+                                      child: Wrap(
+                                        spacing: 6,
+                                        runSpacing: 4,
+                                        children: [
+                                          if (message.categoryLabel != null)
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(
+                                                  horizontal: 8, vertical: 4),
+                                              decoration: BoxDecoration(
+                                                color: Colors.white.withValues(alpha: 0.2),
+                                                borderRadius: BorderRadius.circular(8),
+                                              ),
+                                              child: Text(
+                                                message.categoryLabel!,
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                          if (message.urgency != null && message.urgency!.isNotEmpty)
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(
+                                                  horizontal: 8, vertical: 4),
+                                              decoration: BoxDecoration(
+                                                color: message.isUrgent
+                                                    ? const Color(0xFFFF453A)
+                                                    : Colors.amber.shade700,
+                                                borderRadius: BorderRadius.circular(8),
+                                              ),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  const Icon(
+                                                    Icons.notification_important_rounded,
+                                                    color: Colors.white,
+                                                    size: 11,
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    message.isUrgent ? 'استجابة هامة' : message.urgency!,
+                                                    style: const TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 10,
+                                                      fontWeight: FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  Text(
+                                    message.content,
+                                    textDirection: TextDirection.rtl,
+                                    textAlign: TextAlign.start,
+                                    style: AppTextStyles.body.copyWith(
+                                      height: 1.5,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
                   ),
                 const SizedBox(height: 4),
                 Padding(
@@ -156,7 +229,7 @@ class AIMessageBubble extends StatelessWidget {
           size: 20,
         ),
         const SizedBox(width: 8),
-        Expanded(
+        Flexible(
           child: Text(
             message.error ?? 'حدث خطأ في الاتصال',
             style: AppTextStyles.body.copyWith(

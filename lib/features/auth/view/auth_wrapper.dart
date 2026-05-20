@@ -16,12 +16,13 @@ class AuthWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
     return Consumer<AuthProvider>(
       builder: (context, authProvider, child) {
         // Show loading while checking auth state
         if (authProvider.isLoading) {
-          return const Scaffold(
-            body: LoadingIndicator(message: 'جاري التحقق...'),
+          return Scaffold(
+            body: LoadingIndicator(message: (isAr ? 'جاري التحقق...' : 'Verifying...')),
           );
         }
 
@@ -37,7 +38,7 @@ class AuthWrapper extends StatelessWidget {
         });
 
         // Show loading while navigating
-        return const Scaffold(
+        return Scaffold(
           body: LoadingIndicator(),
         );
       },

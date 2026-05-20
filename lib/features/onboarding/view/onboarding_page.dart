@@ -56,6 +56,12 @@ class _OnboardingPageState extends State<OnboardingPage>
 
   @override
   Widget build(BuildContext context) {
+    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    String finalImagePath = widget.imagePath;
+    if (isDarkMode && finalImagePath.endsWith('.png')) {
+      finalImagePath = finalImagePath.replaceFirst('.png', '_dark.png');
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
       child: Center(
@@ -68,7 +74,7 @@ class _OnboardingPageState extends State<OnboardingPage>
                 width: double.infinity,
                 constraints: const BoxConstraints(maxHeight: 350),
                 child: Image.asset(
-                  widget.imagePath,
+                  finalImagePath,
                   fit: BoxFit.contain, // Fit to space rather than cropping
                   errorBuilder: (context, error, stackTrace) => Container(
                     width: double.infinity,

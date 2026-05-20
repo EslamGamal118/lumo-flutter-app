@@ -282,13 +282,14 @@ class _SessionConfigBottomSheetState extends State<SessionConfigBottomSheet> {
   }
 
   Widget _buildPartItem(SessionPart part, int index) {
+    final theme = Theme.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: theme.dividerColor),
       ),
       child: Row(
         children: [
@@ -307,7 +308,7 @@ class _SessionConfigBottomSheetState extends State<SessionConfigBottomSheet> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(part.typeLabel,
+                Text(part.typeLabel(context),
                     style: AppTextStyles.body
                         .copyWith(fontWeight: FontWeight.bold)),
                 Text('${part.durationMinutes} دقيقة',
@@ -340,35 +341,35 @@ class _AddPartDialogState extends State<_AddPartDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
     return AlertDialog(
-      title: const Text('إضافة جزء للجلسة',
-          textAlign: TextAlign.right, style: TextStyle(fontFamily: 'Cairo')),
+      title: Text(isAr ? 'إضافة جزء للجلسة' : 'Add Session Part',
+          textAlign: TextAlign.right, style: const TextStyle(fontFamily: 'Cairo')),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           DropdownButtonFormField<String>(
             initialValue: _selectedType,
-            decoration: const InputDecoration(
-                labelText: 'النوع', labelStyle: TextStyle(fontFamily: 'Cairo')),
-            items: const [
+            decoration: InputDecoration(
+                labelText: isAr ? 'النوع' : 'Type', labelStyle: const TextStyle(fontFamily: 'Cairo')),
+            items: [
               DropdownMenuItem(
-                  value: 'education',
-                  child: Text('تعلم (Learn)', style: TextStyle(fontFamily: 'Cairo'))),
+                  value: 'study',
+                  child: Text(isAr ? 'تعلم' : 'Study', style: const TextStyle(fontFamily: 'Cairo'))),
               DropdownMenuItem(
                   value: 'games',
-                  child: Text('ألعاب (Game)', style: TextStyle(fontFamily: 'Cairo'))),
+                  child: Text(isAr ? 'ألعاب' : 'Games', style: const TextStyle(fontFamily: 'Cairo'))),
               DropdownMenuItem(
                   value: 'stories',
-                  child: Text('قصص (Story)', style: TextStyle(fontFamily: 'Cairo'))),
+                  child: Text(isAr ? 'قصص' : 'Stories', style: const TextStyle(fontFamily: 'Cairo'))),
               DropdownMenuItem(
                   value: 'drawing',
-                  child: Text('رسم (Drawing)', style: TextStyle(fontFamily: 'Cairo'))),
+                  child: Text(isAr ? 'رسم' : 'Drawing', style: const TextStyle(fontFamily: 'Cairo'))),
             ],
             onChanged: (val) => setState(() => _selectedType = val!),
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<int>(
-            initialValue: _selectedDuration,
             decoration: const InputDecoration(
                 labelText: 'المدة (بالدقائق)',
                 labelStyle: TextStyle(fontFamily: 'Cairo')),

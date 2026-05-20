@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/custom_app_bar.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/providers/auth_provider.dart';
+import '../../../data/models/parent_model.dart';
 import '../view_model/ai_view_model.dart';
 import 'ai_message_bubble.dart';
 
@@ -25,11 +26,20 @@ class _AIChatScreenState extends State<AIChatScreen> {
     super.initState();
     _viewModel = context.read<AIViewModel>();
 
+    final authProvider = context.read<AuthProvider>();
+    final user = authProvider.currentUser;
+    final userId = user?.id;
+    String? childName;
+    if (user is ParentModel) {
+      childName = user.childName;
+    }
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // ✅ إصلاح: لو مفيش user — مش بنحمل حاجة
-      final userId = context.read<AuthProvider>().currentUser?.id;
       if (userId != null) {
         _viewModel.loadChatHistory(userId);
+      }
+      if (childName != null && childName.isNotEmpty) {
+        _viewModel.startSession(childName);
       }
     });
   }
@@ -44,14 +54,13 @@ class _AIChatScreenState extends State<AIChatScreen> {
   // ✅ إصلاح: mounted check بدل Future.delayed
   void _scrollToBottom() {
     if (!mounted) return;
-    if (!_scrollController.hasClients) return;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       if (!_scrollController.hasClients) return;
       _scrollController.animateTo(
         _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300),
+        duration: Duration(milliseconds: 300),
         curve: Curves.easeOut,
       );
     });
@@ -72,6 +81,7 @@ class _AIChatScreenState extends State<AIChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
     final theme = Theme.of(context);
     final currentUser = context.watch<AuthProvider>().currentUser;
     final userAvatarUrl = currentUser?.avatarUrl ?? currentUser?.profileImage;
@@ -83,18 +93,18 @@ class _AIChatScreenState extends State<AIChatScreen> {
         showBackButton: true, // ✅ إصلاح: true عشان المستخدم يقدر يرجع
         actions: [
           PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert_rounded),
+            icon: Icon(Icons.more_vert_rounded),
             onSelected: (value) {
               if (value == 'clear') _showClearDialog();
             },
             itemBuilder: (context) => [
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'clear',
                 child: Row(
                   children: [
                     Icon(Icons.delete_outline_rounded),
                     SizedBox(width: 8),
-                    Text('مسح المحادثة'),
+                    Text((isAr ? 'مسح المحادثة' : 'Clear chat')),
                   ],
                 ),
               ),
@@ -118,7 +128,7 @@ class _AIChatScreenState extends State<AIChatScreen> {
                           height: 200,
                           fit: BoxFit.contain,
                         ),
-                        const SizedBox(height: 24),
+                        SizedBox(height: 24),
                         // ✅ إصلاح: AppColors بدل hardcoded color
                         Text(
                           'كونكت',
@@ -129,7 +139,7 @@ class _AIChatScreenState extends State<AIChatScreen> {
                             letterSpacing: 4,
                           ),
                         ),
-                        const SizedBox(height: 6),
+                        SizedBox(height: 6),
                         // ✅ إصلاح: نص عربي بدل English
                         Text(
                           'مساعدك الطبي الذكي',
@@ -147,12 +157,17 @@ class _AIChatScreenState extends State<AIChatScreen> {
             );
           }
 
+          // ✅ Auto-scroll عند كل تحديث للرسايل
+          if (viewModel.messages.isNotEmpty) {
+            WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+          }
+
           return Column(
             children: [
               Expanded(
                 child: ListView.builder(
                   controller: _scrollController,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  padding: EdgeInsets.symmetric(vertical: 16),
                   itemCount: viewModel.messages.length,
                   itemBuilder: (context, index) {
                     return AIMessageBubble(
@@ -171,8 +186,9 @@ class _AIChatScreenState extends State<AIChatScreen> {
   }
 
   Widget _buildInputArea(AIViewModel viewModel, ThemeData theme) {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: theme.cardColor,
         border: Border(
@@ -182,7 +198,7 @@ class _AIChatScreenState extends State<AIChatScreen> {
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
-            offset: const Offset(0, -2),
+            offset: Offset(0, -2),
           ),
         ],
       ),
@@ -192,16 +208,16 @@ class _AIChatScreenState extends State<AIChatScreen> {
           children: [
             Expanded(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 120),
+                constraints: BoxConstraints(maxHeight: 120),
                 child: AppTextField(
                   controller: _messageController,
-                  hint: 'اسأل عن أي شيء',
+                  hint: (isAr ? 'اسأل عن أي شيء' : 'About anything.'),
                   maxLines: null,
                   enabled: !viewModel.isSending,
                 ),
               ),
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: 8),
             Container(
               decoration: BoxDecoration(
                 color: AppColors.primary,
@@ -210,7 +226,7 @@ class _AIChatScreenState extends State<AIChatScreen> {
               child: IconButton(
                 onPressed: viewModel.isSending ? null : _handleSend,
                 icon: viewModel.isSending
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(
@@ -219,7 +235,7 @@ class _AIChatScreenState extends State<AIChatScreen> {
                               AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
                       )
-                    : const Icon(Icons.send_rounded),
+                    : Icon(Icons.send_rounded),
                 color: Colors.white,
               ),
             ),
@@ -230,18 +246,19 @@ class _AIChatScreenState extends State<AIChatScreen> {
   }
 
   void _showClearDialog() {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
-        title: const Text('مسح المحادثة'),
-        content: const Text('هل أنت متأكد من مسح جميع الرسائل؟'),
+        title: Text((isAr ? 'مسح المحادثة' : 'Clear chat')),
+        content: Text((isAr ? 'هل أنت متأكد من مسح جميع الرسائل؟' : 'Are you sure you want to delete all messages?')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('إلغاء'),
+            child: Text((isAr ? 'إلغاء' : 'Cancel')),
           ),
           TextButton(
             onPressed: () {
@@ -255,7 +272,7 @@ class _AIChatScreenState extends State<AIChatScreen> {
             style: TextButton.styleFrom(
               foregroundColor: AppColors.destructive,
             ),
-            child: const Text('مسح'),
+            child: Text((isAr ? 'مسح' : 'Delete')),
           ),
         ],
       ),

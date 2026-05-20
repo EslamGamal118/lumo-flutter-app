@@ -27,7 +27,7 @@ class SessionViewModel extends ChangeNotifier {
           ? _parts[_currentPartIndex]
           : null;
 
-  String get currentPartLabel => currentPart?.typeLabel ?? '';
+  String currentPartLabel(BuildContext context) => currentPart?.typeLabel(context) ?? '';
 
   String get formattedTime {
     final minutes = (_secondsRemainingInPart ~/ 60).toString().padLeft(2, '0');
@@ -166,7 +166,7 @@ class SessionViewModel extends ChangeNotifier {
     try {
       // 1. Create session on server
       final segments = parts.map((p) => {
-        'activity_type': p.type,
+        'activity_type': p.getBackendType(p.type),
         'planned_duration': p.durationMinutes,
       }).toList();
 
@@ -221,7 +221,7 @@ class SessionViewModel extends ChangeNotifier {
 
     try {
       final segments = parts.map((p) => {
-        'activity_type': p.type,
+        'activity_type': p.getBackendType(p.type),
         'planned_duration': p.durationMinutes,
       }).toList();
 

@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'dart:async';
-
-import '../../../core/theme/app_colors.dart';
 
 import '../../../core/router/route_names.dart';
 import '../../../shared/providers/auth_provider.dart';
@@ -136,18 +133,9 @@ class _SplashScreenState extends State<SplashScreen>
               children: [
                 Image.asset(
                   'assets/images_from_web/web_splash.png',
-                  width: 180,
-                  height: 180,
+                  width: 300,
+                  height: 300,
                   fit: BoxFit.contain,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'LUMO',
-                  style: GoogleFonts.pacifico(
-                    fontSize: 48,
-                    color: AppColors.primary,
-                    letterSpacing: 2,
-                  ),
                 ),
               ],
             ),

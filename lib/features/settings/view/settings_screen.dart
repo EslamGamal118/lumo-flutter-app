@@ -30,7 +30,6 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  bool _notificationsEnabled = true;
 
   @override
   Widget build(BuildContext context) {
@@ -87,15 +86,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           // ── General Section ─────────────────────────────────
           _buildSectionHeader(l10n.generalSection, Icons.tune_rounded),
           _buildSettingsCard([
-            _buildSwitchTile(
-              icon: Icons.notifications_outlined,
-              iconColor: const Color(0xFFF59E0B),
-              title: l10n.notifications,
-              subtitle: _notificationsEnabled ? l10n.enabled : l10n.disabled,
-              value: _notificationsEnabled,
-              onChanged: (v) => setState(() => _notificationsEnabled = v),
-            ),
-            _buildDivider(),
             _buildListTile(
               icon: Icons.language_rounded,
               iconColor: const Color(0xFF22C55E),
@@ -181,8 +171,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             gradient: AppColors.primaryGradient,
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Icon(Icons.favorite,
-                              color: Colors.white, size: 24),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.asset(
+                              'assets/images/lumo-logo.png',
+                              fit: BoxFit.cover,
+                            ),
+                          ),
                         ),
                         const SizedBox(width: 16),
                         Column(

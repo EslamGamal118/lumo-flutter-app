@@ -23,9 +23,10 @@ class MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
     return Padding(
       // React: px-6 py-2 (space-y-4 / 2)
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+      padding: EdgeInsets.symmetric(horizontal: 24, vertical: 4),
       child: Row(
         mainAxisAlignment:
             isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
@@ -38,15 +39,15 @@ class MessageBubble extends StatelessWidget {
               child: Container(
                 // React: px-5 py-3
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 decoration: BoxDecoration(
                   // React user: bg-gradient-to-r from-[#2196F3] to-[#1565C0]
                   // React doctor: bg-white shadow-md
                   gradient: isMe ? AppColors.primaryGradient : null,
                   color: isMe ? null : Colors.white,
                   borderRadius: BorderRadius.only(
-                    topLeft: const Radius.circular(20),
-                    topRight: const Radius.circular(20),
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
                     // React user (RTL): rounded-tr-sm → bottomRight small
                     // React doctor (RTL): rounded-tl-sm → bottomLeft small
                     bottomLeft: Radius.circular(isMe ? 20 : 4),
@@ -57,7 +58,7 @@ class MessageBubble extends StatelessWidget {
                           BoxShadow(
                             color: Colors.black.withValues(alpha: 0.08),
                             blurRadius: 8,
-                            offset: const Offset(0, 2),
+                            offset: Offset(0, 2),
                           ),
                         ]
                       : null,
@@ -87,17 +88,17 @@ class MessageBubble extends StatelessWidget {
                               width: 200,
                               height: 150,
                               color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                              child: const Icon(Icons.broken_image),
+                              child: Icon(Icons.broken_image),
                             ),
                           ),
                         ),
                       if (message.hasFile)
                         Container(
-                          padding: const EdgeInsets.all(12),
+                          padding: EdgeInsets.all(12),
                           decoration: BoxDecoration(
                             color: isMe
                                 ? Colors.white.withValues(alpha: 0.2)
-                                : const Color(0xFFE3F2FD),
+                                : Color(0xFFE3F2FD),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
@@ -108,16 +109,16 @@ class MessageBubble extends StatelessWidget {
                                 size: 20,
                                 color: isMe
                                     ? Colors.white
-                                    : const Color(0xFF2196F3),
+                                    : Color(0xFF2196F3),
                               ),
-                              const SizedBox(width: 8),
+                              SizedBox(width: 8),
                               Flexible(
                                 child: Text(
-                                  message.fileName ?? 'ملف',
+                                  message.fileName ?? (isAr ? 'ملف' : 'File'),
                                   style: AppTextStyles.caption.copyWith(
                                     color: isMe
                                         ? Colors.white
-                                        : const Color(0xFF1A1A2E),
+                                        : Color(0xFF1A1A2E),
                                   ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -125,17 +126,17 @@ class MessageBubble extends StatelessWidget {
                             ],
                           ),
                         ),
-                      if (message.content.isNotEmpty) const SizedBox(height: 8),
+                      if (message.content.isNotEmpty) SizedBox(height: 8),
                     ],
                     // Message text - React: mb-1
                     if (message.content.isNotEmpty)
                       Text(
                         message.content,
                         style: AppTextStyles.body.copyWith(
-                          color: isMe ? Colors.white : const Color(0xFF1A1A2E),
+                          color: isMe ? Colors.white : Color(0xFF1A1A2E),
                         ),
                       ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     // Time - React: text-xs text-white/70 or text-[#64748b]
                     Row(
                       mainAxisSize: MainAxisSize.min,
@@ -145,12 +146,12 @@ class MessageBubble extends StatelessWidget {
                           style: AppTextStyles.caption.copyWith(
                             color: isMe
                                 ? Colors.white.withValues(alpha: 0.7)
-                                : const Color(0xFF64748B),
+                                : Color(0xFF64748B),
                             fontSize: 11,
                           ),
                         ),
                         if (isMe) ...[
-                          const SizedBox(width: 4),
+                          SizedBox(width: 4),
                           Icon(
                             message.isSending
                                 ? Icons.schedule_rounded
@@ -165,7 +166,7 @@ class MessageBubble extends StatelessWidget {
                             color: message.isFailed
                                 ? Colors.redAccent
                                 : message.isRead
-                                    ? const Color(0xFF80DEEA) // blue ticks
+                                    ? Color(0xFF80DEEA) // blue ticks
                                     : Colors.white.withValues(alpha: 0.7),
                           ),
                         ],

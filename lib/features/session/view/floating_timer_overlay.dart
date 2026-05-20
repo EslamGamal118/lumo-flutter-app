@@ -42,7 +42,7 @@ class FloatingTimerOverlay extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          viewModel.currentPartLabel,
+                          viewModel.currentPartLabel(context),
                           style: AppTextStyles.bodySmall.copyWith(
                             color: Colors.white.withValues(alpha: 0.9),
                             fontWeight: FontWeight.bold,

@@ -50,16 +50,16 @@ class _LoginScreenState extends State<LoginScreen> with FormValidationMixin {
     );
 
     if (!mounted) return;
+    
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
 
     setState(() => _isLoading = false);
 
     if (success) {
-      if (!mounted) return;
-      
       // ✅ Show success message
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('تم تسجيل الدخول بنجاح'),
+        SnackBar(
+          content: Text((isAr ? 'تم تسجيل الدخول بنجاح' : 'Login Successful')),
           backgroundColor: Colors.green,
         ),
       );
@@ -85,7 +85,7 @@ class _LoginScreenState extends State<LoginScreen> with FormValidationMixin {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(authProvider.errorMessage ?? 'فشل تسجيل الدخول'),
+          content: Text(authProvider.errorMessage ?? (isAr ? 'فشل تسجيل الدخول' : 'Login Failure')),
           backgroundColor: AppColors.destructive,
         ),
       );
@@ -94,17 +94,18 @@ class _LoginScreenState extends State<LoginScreen> with FormValidationMixin {
 
   @override
   Widget build(BuildContext context) {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 48.0),
+          padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 48.0),
           child: Form(
             key: formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 40),
+                SizedBox(height: 40),
 
                 // Logo
                 Center(
@@ -127,7 +128,7 @@ class _LoginScreenState extends State<LoginScreen> with FormValidationMixin {
                                     ? AppColors.primary.withValues(alpha: 0.15)
                                     : Colors.black.withValues(alpha: 0.3),
                             blurRadius: 20,
-                            offset: const Offset(0, 8),
+                            offset: Offset(0, 8),
                           ),
                         ],
                       ),
@@ -140,46 +141,46 @@ class _LoginScreenState extends State<LoginScreen> with FormValidationMixin {
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: 24),
 
                 Text(
-                  'مرحباً بعودتك',
+                  (isAr ? 'مرحباً بعودتك' : '- Hey.'),
                   style: AppTextStyles.h1.copyWith(
                     color: Theme.of(context).textTheme.displayLarge?.color,
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Text(
-                  'سجل الدخول لمتابعة رحلتك الصحية',
+                  (isAr ? 'سجل الدخول لمتابعة رحلتك الصحية' : 'Log in to continue your wellness journey'),
                   style: AppTextStyles.body.copyWith(
                     color: Theme.of(context).hintColor,
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 48),
+                SizedBox(height: 48),
 
                 // Phone field
                 AppTextField(
                   controller: _phoneController,
-                  label: 'رقم الجوال',
-                  hint: 'أدخل رقم الجوال',
+                  label: (isAr ? 'رقم الجوال' : 'Mobile No.'),
+                  hint: (isAr ? 'أدخل رقم الجوال' : 'Enter your Mobile'),
                   prefixIcon: Icons.phone_android_outlined,
                   keyboardType: TextInputType.phone,
                   validator: validatePhone,
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
 
                 // Password field
                 AppTextField(
                   controller: _passwordController,
-                  label: 'كلمة المرور',
-                  hint: 'أدخل كلمة المرور',
+                  label: (isAr ? 'كلمة المرور' : 'PASSWORD'),
+                  hint: (isAr ? 'أدخل كلمة المرور' : 'enter_password'),
                   prefixIcon: Icons.lock_outline,
                   obscureText: true,
                   validator: validatePassword,
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
 
                 // Forgot password
                 Align(
@@ -194,7 +195,7 @@ class _LoginScreenState extends State<LoginScreen> with FormValidationMixin {
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                     child: Text(
-                      'نسيت كلمة المرور؟',
+                      (isAr ? 'نسيت كلمة المرور؟' : 'Forgot Password?'),
                       style: AppTextStyles.body.copyWith(
                         color: AppColors.primary,
                         fontWeight: FontWeight.w500,
@@ -202,22 +203,22 @@ class _LoginScreenState extends State<LoginScreen> with FormValidationMixin {
                     ),
                   ),
                 ),
-                const SizedBox(height: 32),
+                SizedBox(height: 32),
 
                 // Login button
                 AppButton(
-                  text: 'تسجيل الدخول',
+                  text: (isAr ? 'تسجيل الدخول' : 'Logging'),
                   onPressed: _handleLogin,
                   isLoading: _isLoading,
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: 24),
 
                 // Sign up link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'ليس لديك حساب؟ ',
+                      (isAr ? 'ليس لديك حساب؟ ' : 'Don\'t have account?'),
                       style: AppTextStyles.body.copyWith(
                         color: Theme.of(context).hintColor,
                       ),
@@ -227,7 +228,7 @@ class _LoginScreenState extends State<LoginScreen> with FormValidationMixin {
                         Navigator.pushNamed(context, RouteNames.roleSelection);
                       },
                       child: Text(
-                        'إنشاء حساب',
+                        (isAr ? 'إنشاء حساب' : 'Create account'),
                         style: AppTextStyles.body.copyWith(
                           color: AppColors.primary,
                           fontWeight: FontWeight.bold,

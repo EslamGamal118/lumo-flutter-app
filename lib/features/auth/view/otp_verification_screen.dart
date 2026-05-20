@@ -47,7 +47,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
   Future<void> _handleVerify() async {
     if (_otp.length < 4) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('يرجى إدخال رمز التحقق كاملاً')),
+        SnackBar(content: Text('يرجى إدخال رمز التحقق كاملاً')),
       );
       return;
     }
@@ -101,8 +101,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
           } else {
             // لو فشل الـ login، روح لـ login screen
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('تم التحقق، يرجى تسجيل الدخول'),
+              SnackBar(
+                content: Text('تم التحقق، يرجى تسجيل الدخول(isAr ? '),
                 backgroundColor: AppColors.primary,
               ),
             );
@@ -147,9 +147,10 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
         ),
       );
     } else {
+      final isAr = Localizations.localeOf(context).languageCode == 'ar';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(authProvider.errorMessage ?? 'فشل إعادة إرسال الرمز'),
+          content: Text(authProvider.errorMessage ?? (isAr ? 'فشل إعادة إرسال الرمز' : 'Resend Code')),
           backgroundColor: AppColors.destructive,
         ),
       );
@@ -158,11 +159,12 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
     return Scaffold(
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [Color(0xFFE3F2FD), Colors.white],
             begin: Alignment.topCenter,
@@ -172,14 +174,14 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
         child: SafeArea(
           child: SingleChildScrollView(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
+              padding: EdgeInsets.symmetric(horizontal: 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const SizedBox(height: 48),
+                  SizedBox(height: 48),
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
-                    child: const Align(
+                    child: Align(
                       alignment: Alignment.centerRight,
                       child: Icon(
                         Icons.arrow_back_ios_rounded,
@@ -188,9 +190,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
                   Text(
-                    'رمز التحقق',
+                    (isAr ? 'رمز التحقق' : 'Verification Code'),
                     style: AppTextStyles.h1.copyWith(
                       color: Theme.of(context).textTheme.displayLarge?.color,
                       fontSize: 30,
@@ -198,7 +200,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
                     ),
                     textAlign: TextAlign.right,
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   Text(
                     'لقد أرسلنا رمز التحقق المكون من 4 أرقام إلى رقم الهاتف ${widget.phone}',
                     style: AppTextStyles.body.copyWith(
@@ -206,7 +208,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
                     ),
                     textAlign: TextAlign.right,
                   ),
-                  const SizedBox(height: 48),
+                  SizedBox(height: 48),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: List.generate(4, (index) {
@@ -229,7 +231,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(
+                              borderSide: BorderSide(
                                   color: AppColors.primary, width: 2),
                             ),
                           ),
@@ -247,20 +249,20 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
                       );
                     }),
                   ),
-                  const SizedBox(height: 48),
+                  SizedBox(height: 48),
                   AppButton(
-                    text: 'تحقق',
+                    text: (isAr ? 'تحقق' : 'Verify'),
                     onPressed: _handleVerify,
                     isLoading: _isLoading,
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       TextButton(
                         onPressed: _isLoading ? null : _handleResend,
                         child: Text(
-                          'إعادة إرسال الرمز',
+                          (isAr ? 'إعادة إرسال الرمز' : 'Resend Code'),
                           style: AppTextStyles.body.copyWith(
                             color: AppColors.primary,
                             fontWeight: FontWeight.bold,
@@ -268,7 +270,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen>
                         ),
                       ),
                       Text(
-                        'لم يصلك الرمز؟',
+                        (isAr ? 'لم يصلك الرمز؟' : "Don't have your code? "),
                         style: AppTextStyles.body
                             .copyWith(color: Theme.of(context).hintColor),
                       ),

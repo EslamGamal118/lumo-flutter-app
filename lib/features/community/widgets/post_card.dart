@@ -15,7 +15,7 @@ import '../../../shared/providers/notification_provider.dart';
 import '../view_model/community_view_model.dart';
 import '../../../shared/widgets/avatar_widget.dart';
 import '../../../shared/widgets/delete_confirmation_dialog.dart';
-
+import '../../home/view_model/main_layout_view_model.dart';
 
 class PostCard extends StatefulWidget {
   final PostModel post;
@@ -344,21 +344,28 @@ class _PostCardState extends State<PostCard> {
       return;
     }
 
-    Navigator.pushNamed(
-      context,
-      RouteNames.profile,
-      arguments: {
-        'userId': post.userId,
-        // Pass what we have so the profile can render immediately even on desktop.
-        'user': UserModel(
-          id: post.userId,
-          name: post.userName,
-          avatarUrl: post.userAvatarUrl,
-          email: '',
-          role: post.userRole ?? UserRole.parent,
-        ),
-      },
-    );
+    final currentUserId = context.read<AuthProvider>().currentUser?.id;
+    if (currentUserId != null && currentUserId == post.userId) {
+      // It's our own profile, switch the bottom nav to the Profile tab (index 4)
+      context.read<MainLayoutViewModel>().setIndex(4);
+    } else {
+      // It's another user's profile, push the generic profile screen
+      Navigator.pushNamed(
+        context,
+        RouteNames.profile,
+        arguments: {
+          'userId': post.userId,
+          // Pass what we have so the profile can render immediately even on desktop.
+          'user': UserModel(
+            id: post.userId,
+            name: post.userName,
+            avatarUrl: post.userAvatarUrl,
+            email: '',
+            role: post.userRole ?? UserRole.parent,
+          ),
+        },
+      );
+    }
   }
 }
 

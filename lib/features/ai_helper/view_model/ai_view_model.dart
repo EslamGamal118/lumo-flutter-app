@@ -13,11 +13,26 @@ class AIViewModel extends ChangeNotifier {
   bool _isSending = false;
   String? _errorMessage;
 
+  /// The child name used for the chatbot session context.
+  String? _childName;
+
   List<AIMessageModel> get messages => _messages;
   bool get isSending => _isSending;
   String? get errorMessage => _errorMessage;
+  bool get isSessionStarted => _aiRepository.isSessionStarted;
 
-  // Load chat history
+  // ── Session Start ─────────────────────────────────────────────────────
+
+  /// Initialises the chatbot session with the child's name.
+  /// Should be called once when the chat screen opens.
+  Future<void> startSession(String childName) async {
+    _childName = childName;
+    await _aiRepository.startSession(childName);
+    notifyListeners();
+  }
+
+  // ── Load chat history ─────────────────────────────────────────────────
+
   Future<void> loadChatHistory(int userId) async {
     try {
       final history = await _aiRepository.getChatHistory(userId);
@@ -29,8 +44,7 @@ class AIViewModel extends ChangeNotifier {
           AIMessageModel(
             id: DateTime.now().millisecondsSinceEpoch.toString(),
             userId: 0,
-            content:
-                'مرحباً! أنا مساعد Lumo AI الذكي. يمكنني مساعدتك في الإجابة عن أسئلتك المتعلقة بصحة الأطفال والرعاية الطبية. كيف يمكنني مساعدتك اليوم؟',
+            content: 'مرحباً! أنا مساعد Lumo AI الذكي. يمكنني مساعدتك في الإجابة عن أسئلتك المتعلقة بصحة الأطفال والرعاية الطبية. كيف يمكنني مساعدتك اليوم؟',
             isUser: false,
             timestamp: DateTime.now(),
           ),
@@ -45,7 +59,8 @@ class AIViewModel extends ChangeNotifier {
     }
   }
 
-  // Send message
+  // ── Send message ──────────────────────────────────────────────────────
+
   Future<void> sendMessage(int userId, String content) async {
     if (content.trim().isEmpty) return;
 
@@ -74,10 +89,11 @@ class AIViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Send to AI
+      // Send to AI with child name context
       final aiResponse = await _aiRepository.sendMessage(
         userId,
         content,
+        childName: _childName,
       );
 
       // Remove loading message
@@ -91,23 +107,29 @@ class AIViewModel extends ChangeNotifier {
       // Remove loading message
       _messages.removeLast();
 
-      // Add error message
+      // Strip the 'Exception: ' prefix so custom Arabic messages from
+      // AIRepository (ISP redirect / 500 / timeout) display cleanly.
+      final friendlyError =
+          e.toString().replaceFirst('Exception: ', '');
+
+      // Add error message with the specific error from the network layer
       final errorMessage = AIMessageModel(
         id: '${DateTime.now().millisecondsSinceEpoch + 2}',
         userId: 0,
         content: '',
         isUser: false,
         timestamp: DateTime.now(),
-        error: 'عذراً، حدث خطأ في الاتصال. الرجاء المحاولة مرة أخرى.',
+        error: friendlyError,
       );
       _messages.add(errorMessage);
-      _errorMessage = e.toString();
+      _errorMessage = friendlyError;
       _isSending = false;
       notifyListeners();
     }
   }
 
-  // Clear chat history
+  // ── Clear chat history ────────────────────────────────────────────────
+
   Future<void> clearChatHistory(int userId) async {
     await _aiRepository.clearChatHistory(userId);
     _messages.clear();
@@ -124,6 +146,7 @@ class AIViewModel extends ChangeNotifier {
     _messages.clear();
     _isSending = false;
     _errorMessage = null;
+    _childName = null;
     notifyListeners();
   }
 }

@@ -99,11 +99,12 @@ class _SignupScreenState extends State<SignupScreen> with FormValidationMixin {
 
   Future<void> _handleSignup() async {
     if (!validateForm()) return;
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
 
     if (_selectedRole.isParent && _childImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('الرجاء إرفاق صورة الطفل (إجباري)'),
+        SnackBar(
+          content: Text((isAr ? 'الرجاء إرفاق صورة الطفل (إجباري)' : 'Please attach a photo of the child (mandatory)')),
           backgroundColor: AppColors.destructive,
         ),
       );
@@ -181,7 +182,7 @@ class _SignupScreenState extends State<SignupScreen> with FormValidationMixin {
         );
       } else {
         if (!mounted) return;
-        _showErrorSnackBar(authProvider.errorMessage ?? 'فشل إنشاء الحساب');
+        _showErrorSnackBar(authProvider.errorMessage ?? (isAr ? 'فشل إنشاء الحساب' : 'Signup failed'));
       }
     } catch (e) {
       if (!mounted) return;
@@ -201,6 +202,7 @@ class _SignupScreenState extends State<SignupScreen> with FormValidationMixin {
     required String hint,
     required IconData prefixIcon,
   }) {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
     return GestureDetector(
       onTap: onTap,
       child: Column(
@@ -210,9 +212,9 @@ class _SignupScreenState extends State<SignupScreen> with FormValidationMixin {
             label,
             style: AppTextStyles.label,
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(24),
@@ -229,10 +231,10 @@ class _SignupScreenState extends State<SignupScreen> with FormValidationMixin {
                   color: AppColors.mutedForeground,
                   size: 24,
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    imageFile != null ? 'تم رفع الصورة بنجاح' : hint,
+                    imageFile != null ? (isAr ? 'تم رفع الصورة بنجاح' : 'Image is uploaded success') : hint,
                     style: AppTextStyles.body.copyWith(
                       color: imageFile != null
                           ? Theme.of(context).textTheme.bodyLarge?.color
@@ -241,7 +243,7 @@ class _SignupScreenState extends State<SignupScreen> with FormValidationMixin {
                   ),
                 ),
                 if (imageFile != null) ...[
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   ClipOval(
                     child: Image.file(
                       imageFile,
@@ -251,8 +253,8 @@ class _SignupScreenState extends State<SignupScreen> with FormValidationMixin {
                     ),
                   ),
                 ] else ...[
-                  const SizedBox(width: 12),
-                  const Icon(
+                  SizedBox(width: 12),
+                  Icon(
                     Icons.camera_alt_outlined,
                     size: 24,
                     color: AppColors.mutedForeground,
@@ -268,25 +270,26 @@ class _SignupScreenState extends State<SignupScreen> with FormValidationMixin {
 
   @override
   Widget build(BuildContext context) {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded),
+          icon: Icon(Icons.arrow_back_ios_rounded),
           onPressed: () => Navigator.pop(context),
         ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+          padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
           child: Form(
             key: formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
 
                 // Header with Logo
                 Center(
@@ -309,7 +312,7 @@ class _SignupScreenState extends State<SignupScreen> with FormValidationMixin {
                                     ? AppColors.primary.withValues(alpha: 0.15)
                                     : Colors.black.withValues(alpha: 0.3),
                             blurRadius: 20,
-                            offset: const Offset(0, 8),
+                            offset: Offset(0, 8),
                           ),
                         ],
                       ),
@@ -322,75 +325,75 @@ class _SignupScreenState extends State<SignupScreen> with FormValidationMixin {
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: 24),
 
                 Text(
-                  'إنشاء حساب',
+                  (isAr ? 'إنشاء حساب' : 'Create account'),
                   style: AppTextStyles.h1.copyWith(
                     color: Theme.of(context).textTheme.displayLarge?.color,
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Text(
-                  'التسجيل ك${_selectedRole.isDoctor ? "طبيب" : "مستخدم"}',
+                  'التسجيل ك${_selectedRole.isDoctor ? (isAr ? "طبيب" : "DOCTOR") : (isAr ? "مستخدم" : "Users")}',
                   style: AppTextStyles.body.copyWith(
                     color: Theme.of(context).hintColor,
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 32),
+                SizedBox(height: 32),
 
                 // Common fields
                 AppTextField(
                   controller: _nameController,
-                  label: 'الاسم الكامل',
-                  hint: 'أدخل اسمك الكامل',
+                  label: (isAr ? 'الاسم الكامل' : '_ Full name'),
+                  hint: (isAr ? 'أدخل اسمك الكامل' : 'Enter your full name'),
                   prefixIcon: Icons.person_outline,
                   validator: validateName,
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
                 _buildPhotoInputField(
                   imageFile: _userImage,
                   onTap: () => _pickImage(isChild: false),
-                  label: 'الصورة الشخصية',
-                  hint: 'أضف صورتك الشخصية (اختياري)',
+                  label: (isAr ? 'الصورة الشخصية' : 'Personal photo'),
+                  hint: (isAr ? 'أضف صورتك الشخصية (اختياري)' : 'Add your profile photo (optional)'),
                   prefixIcon: _selectedRole.isDoctor
                       ? Icons.medical_services_outlined
                       : Icons.person_outline,
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
                 AppTextField(
                   controller: _emailController,
-                  label: 'البريد الإلكتروني',
-                  hint: 'أدخل بريدك الإلكتروني',
+                  label: (isAr ? 'البريد الإلكتروني' : 'Email'),
+                  hint: (isAr ? 'أدخل بريدك الإلكتروني' : 'Enter your email'),
                   prefixIcon: Icons.mail_outline,
                   keyboardType: TextInputType.emailAddress,
                   validator: validateEmail,
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
                 AppTextField(
                   controller: _phoneController,
-                  label: 'رقم الجوال',
-                  hint: 'أدخل رقم الجوال',
+                  label: (isAr ? 'رقم الجوال' : 'Mobile No.'),
+                  hint: (isAr ? 'أدخل رقم الجوال' : 'Enter your Mobile'),
                   prefixIcon: Icons.phone_android_outlined,
                   keyboardType: TextInputType.phone,
                   validator: validatePhone,
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
                 AppTextField(
                   controller: _passwordController,
-                  label: 'كلمة المرور',
-                  hint: 'أنشئ كلمة مرور',
+                  label: (isAr ? 'كلمة المرور' : 'PASSWORD'),
+                  hint: (isAr ? 'أنشئ كلمة مرور' : 'Create a password'),
                   prefixIcon: Icons.lock_outline,
                   obscureText: true,
                   validator: validatePassword,
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
                 AppTextField(
                   controller: _confirmPasswordController,
-                  label: 'تأكيد كلمة المرور',
-                  hint: 'أكد كلمة المرور',
+                  label: (isAr ? 'تأكيد كلمة المرور' : 'تأكيد كلمة المرور'),
+                  hint: (isAr ? 'أكد كلمة المرور' : 'Confirm your password'),
                   prefixIcon: Icons.lock_outline,
                   obscureText: true,
                   validator: (value) => validateConfirmPassword(
@@ -401,32 +404,32 @@ class _SignupScreenState extends State<SignupScreen> with FormValidationMixin {
 
                 // Role-specific fields
                 if (_selectedRole.isParent) ...[
-                  const SizedBox(height: 24),
-                  const Divider(),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
+                  Divider(),
+                  SizedBox(height: 24),
                   AppTextField(
                     controller: _childNameController,
-                    label: 'اسم الطفل',
-                    hint: 'أدخل اسم الطفل فقط',
+                    label: (isAr ? 'اسم الطفل' : 'Child’s Name'),
+                    hint: (isAr ? 'أدخل اسم الطفل فقط' : 'Enter child name'),
                     prefixIcon: Icons.favorite_border,
                     inputFormatters: [
                       FilteringTextInputFormatter.deny(RegExp(r'\s')),
                     ],
                     validator: validateChildName,
                   ),
-                  const SizedBox(height: 20),
+                  SizedBox(height: 20),
                   _buildPhotoInputField(
                     imageFile: _childImage,
                     onTap: () => _pickImage(isChild: true),
-                    label: 'صورة الطفل',
-                    hint: 'أضف صورة الطفل (إجباري)',
+                    label: (isAr ? 'صورة الطفل' : 'the child picture'),
+                    hint: (isAr ? 'أضف صورة الطفل (إجباري)' : 'Add child\'s photo (mandatory)'),
                     prefixIcon: Icons.child_care_outlined,
                   ),
-                  const SizedBox(height: 20),
+                  SizedBox(height: 20),
                   AppTextField(
                     controller: _childAgeController,
-                    label: 'عمر الطفل',
-                    hint: 'أدخل عمر الطفل',
+                    label: (isAr ? 'عمر الطفل' : 'Age of child'),
+                    hint: (isAr ? 'أدخل عمر الطفل' : 'Child Age'),
                     prefixIcon: Icons.calendar_today_outlined,
                     keyboardType: TextInputType.number,
                     validator: validateAge,
@@ -434,37 +437,37 @@ class _SignupScreenState extends State<SignupScreen> with FormValidationMixin {
                 ],
 
                 if (_selectedRole.isDoctor) ...[
-                  const SizedBox(height: 20),
+                  SizedBox(height: 20),
                   AppTextField(
                     controller: _licenseNumberController,
-                    label: 'رقم الطبيب / الترخيص',
-                    hint: 'أدخل رقم الطبيب',
+                    label: (isAr ? 'رقم الطبيب / الترخيص' : 'Doctor Number/ License'),
+                    hint: (isAr ? 'أدخل رقم الطبيب' : 'Enter Doctor Number'),
                     prefixIcon: Icons.credit_card_outlined,
                     keyboardType: TextInputType.number,
                     validator: validateLicenseNumber,
                   ),
-                  const SizedBox(height: 20),
+                  SizedBox(height: 20),
                   AppTextField(
                     controller: _clinicLocationController,
-                    label: 'موقع العيادة',
-                    hint: 'أدخل موقع العيادة',
+                    label: (isAr ? 'موقع العيادة' : 'Practice location'),
+                    hint: (isAr ? 'أدخل موقع العيادة' : 'Enter clinic location'),
                     prefixIcon: Icons.location_on_outlined,
-                    validator: (value) => value == null || value.isEmpty ? 'يرجى إدخال موقع العيادة' : null,
+                    validator: (value) => value == null || value.isEmpty ? (isAr ? 'يرجى إدخال موقع العيادة' : 'Please enter clinic location') : null,
                   ),
                 ],
 
-                const SizedBox(height: 40),
+                SizedBox(height: 40),
                 AppButton(
-                  text: 'إنشاء حساب',
+                  text: (isAr ? 'إنشاء حساب' : 'Create account'),
                   onPressed: _handleSignup,
                   isLoading: _isLoading,
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: 24),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'لديك حساب بالفعل؟ ',
+                      (isAr ? 'لديك حساب بالفعل؟ ' : 'Already signed up?'),
                       style: AppTextStyles.body.copyWith(
                         color: Theme.of(context).hintColor,
                       ),
@@ -474,7 +477,7 @@ class _SignupScreenState extends State<SignupScreen> with FormValidationMixin {
                         Navigator.pushNamed(context, RouteNames.login);
                       },
                       child: Text(
-                        'تسجيل الدخول',
+                        (isAr ? 'تسجيل الدخول' : 'Logging'),
                         style: AppTextStyles.body.copyWith(
                           color: AppColors.primary,
                           fontWeight: FontWeight.bold,
@@ -496,12 +499,12 @@ class _SignupScreenState extends State<SignupScreen> with FormValidationMixin {
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.error_outline, color: Colors.white),
-            const SizedBox(width: 12),
+            Icon(Icons.error_outline, color: Colors.white),
+            SizedBox(width: 12),
             Expanded(
               child: Text(
                 message,
-                style: const TextStyle(color: Colors.white),
+                style: TextStyle(color: Colors.white),
               ),
             ),
           ],
@@ -509,8 +512,8 @@ class _SignupScreenState extends State<SignupScreen> with FormValidationMixin {
         backgroundColor: AppColors.destructive,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        margin: const EdgeInsets.all(16),
-        duration: const Duration(seconds: 4),
+        margin: EdgeInsets.all(16),
+        duration: Duration(seconds: 4),
       ),
     );
   }

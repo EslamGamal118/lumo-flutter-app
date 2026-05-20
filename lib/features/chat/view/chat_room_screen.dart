@@ -88,7 +88,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       try {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
+          duration: Duration(milliseconds: 300),
           curve: Curves.easeOut,
         );
       } catch (e) {
@@ -148,12 +148,13 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
     final theme = Theme.of(context);
     final authProvider = context.watch<AuthProvider>();
     final currentUserId = authProvider.currentUser?.id.toString() ?? '';
 
     final messagesBackground = theme.brightness == Brightness.light
-        ? const Color(0xFFF1F5F9)
+        ? Color(0xFFF1F5F9)
         : theme.colorScheme.surfaceContainerLow;
 
     return Scaffold(
@@ -166,17 +167,17 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
               left: 24,
               right: 24,
             ),
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               gradient: AppColors.primaryGradient,
             ),
             child: Row(
               children: [
                 GestureDetector(
                   onTap: () => Navigator.pop(context),
-                  child: const Icon(Icons.arrow_back,
+                  child: Icon(Icons.arrow_back,
                       size: 24, color: Colors.white),
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: 16),
                 GestureDetector(
                   onTap: _navigateToProfile,
                   child: Container(
@@ -191,7 +192,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(
                   child: GestureDetector(
                     onTap: _navigateToProfile,
@@ -225,7 +226,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
                             if (isTyping) {
                               return Text(
-                                'يكتب الآن...',
+                                (isAr ? 'يكتب الآن...' : 'Is writing:'),
                                 style: AppTextStyles.caption.copyWith(
                                   color: Colors.greenAccent,
                                   fontWeight: FontWeight.bold,
@@ -233,7 +234,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                               );
                             }
 
-                            return const SizedBox.shrink();
+                            return SizedBox.shrink();
                           },
                         ),
                       ],
@@ -246,14 +247,14 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                     builder: (context, sessionVM, child) {
                       if (sessionVM.isActive) {
                         return IconButton(
-                          icon: const Icon(Icons.stop_circle_rounded,
+                          icon: Icon(Icons.stop_circle_rounded,
                               color: Colors.redAccent, size: 32),
                           onPressed: () => sessionVM.endSession(),
-                          tooltip: 'إنهاء الجلسة',
+                          tooltip: (isAr ? 'إنهاء الجلسة' : 'Terminating the session'),
                         );
                       }
                       return IconButton(
-                        icon: const Icon(Icons.play_circle_fill_rounded,
+                        icon: Icon(Icons.play_circle_fill_rounded,
                             color: Colors.white, size: 32),
                         onPressed: () {
                           SessionConfigBottomSheet.show(
@@ -262,7 +263,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                                 int.tryParse(widget.otherUserId ?? '') ?? 0,
                           );
                         },
-                        tooltip: 'بدء جلسة',
+                        tooltip: (isAr ? 'بدء جلسة' : 'Start a session'),
                       );
                     },
                   ),
@@ -277,17 +278,17 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                 if (viewModel.isLoading && viewModel.messages.isEmpty) {
                   return ColoredBox(
                     color: messagesBackground,
-                    child: const Center(child: CircularProgressIndicator()),
+                    child: Center(child: CircularProgressIndicator()),
                   );
                 }
 
                 if (viewModel.messages.isEmpty) {
                   return ColoredBox(
                     color: messagesBackground,
-                    child: const EmptyState(
+                    child: EmptyState(
                       icon: Icons.chat_outlined,
-                      title: 'لا توجد رسائل بعد',
-                      message: 'ابدأ المحادثة الآن',
+                      title: (isAr ? 'لا توجد رسائل بعد' : 'No messages'),
+                      message: (isAr ? 'ابدأ المحادثة الآن' : 'Start the conversation now'),
                     ),
                   );
                 }
@@ -307,14 +308,14 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                   color: messagesBackground,
                   child: ListView.builder(
                     controller: _scrollController,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: EdgeInsets.symmetric(vertical: 16),
                     itemCount: itemCount,
                     itemBuilder: (context, index) {
                       // Show typing indicator as the last item
                       if (isOtherTyping &&
                           index == viewModel.messages.length) {
                         return Padding(
-                          padding: const EdgeInsets.only(
+                          padding: EdgeInsets.only(
                               left: 24, right: 64, top: 4, bottom: 4),
                           child: Align(
                             alignment: Alignment.centerLeft,

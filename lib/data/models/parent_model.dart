@@ -79,7 +79,7 @@ class ParentModel extends UserModel {
               ?.map((e) => e.toString())
               .toList() ??
           [],
-      childPhotoUrl: json['child_photo_url']?.toString(),
+      childPhotoUrl: (json['data']?['child_photo_url'] ?? json['child_photo_url'] ?? json['child_image'] ?? json['child_photo'])?.toString(),
     );
   }
 

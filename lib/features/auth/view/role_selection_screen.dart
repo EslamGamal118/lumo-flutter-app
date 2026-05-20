@@ -24,7 +24,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 2),
+      duration: Duration(seconds: 2),
     )..repeat(reverse: true);
     _animation = Tween<double>(begin: -10, end: 10).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
@@ -46,6 +46,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
   }
   @override
   Widget build(BuildContext context) {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -54,14 +55,14 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.primary),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.primary),
           onPressed: () => Navigator.pop(context),
         ),
       ),
       body: SafeArea(
             child: Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+                padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -83,18 +84,18 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                         ),
                         child: ClipOval(
                           child: Padding(
-                            padding: const EdgeInsets.all(24.0),
+                            padding: EdgeInsets.all(24.0),
                             child: Image.asset(
                               'assets/images/ai_avatar.png', // Robot image
                               fit: BoxFit.contain,
                               errorBuilder: (context, error, stackTrace) =>
-                                  const Icon(Icons.smart_toy, size: 80, color: AppColors.primary),
+                                  Icon(Icons.smart_toy, size: 80, color: AppColors.primary),
                             ),
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: 24),
 
                     // LUMO Branding
                     Text(
@@ -106,11 +107,11 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                         color: AppColors.primary,
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: 24),
 
                     // Main Title
                     Text(
-                      'ابدأ رحلة دعم طفلك 🤍',
+                      (isAr ? 'ابدأ رحلة دعم طفلك 🤍' : 'Start your child\'s support journey 🤍'),
                       style: GoogleFonts.cairo(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
@@ -118,11 +119,11 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
 
                     // Sub-title
                     Text(
-                      'تحليل ذكي • متابعة دقيقة • تعاون مع الأطباء',
+                      (isAr ? 'تحليل ذكي • متابعة دقيقة • تعاون مع الأطباء' : 'Intelligent analysis • Careful follow-up • Collaborate with doctors'),
                       style: GoogleFonts.cairo(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
@@ -130,27 +131,27 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 48),
+                    SizedBox(height: 48),
 
                     // Role Cards
                     _RoleCard(
-                      title: 'أنا أحد الوالدين',
-                      subtitle: 'متابعة نمو طفلك والحصول على استشارات',
+                      title: (isAr ? 'أنا أحد الوالدين' : '- I am a parent.'),
+                      subtitle: (isAr ? 'متابعة نمو طفلك والحصول على استشارات' : 'Monitor your child\'s growth and get counseling'),
                       icon: Icons.family_restroom,
                       onTap: () => _navigateToSignup(context, UserRole.parent),
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     _RoleCard(
-                      title: 'أنا طبيب',
-                      subtitle: 'راقب الحالات وتعاون مع الأهالي',
+                      title: (isAr ? 'أنا طبيب' : 'I\'m a doctor of medicine.'),
+                      subtitle: (isAr ? 'راقب الحالات وتعاون مع الأهالي' : 'Monitor cases and cooperate with parents'),
                       icon: Icons.medical_services,
                       onTap: () => _navigateToSignup(context, UserRole.doctor),
                     ),
-                    const SizedBox(height: 48),
+                    SizedBox(height: 48),
 
                     // Footer
                     Text(
-                      'الشروط والأحكام • سياسة الخصوصية • المساعدة',
+                      (isAr ? 'الشروط والأحكام • سياسة الخصوصية • المساعدة' : 'Terms and Conditions • Privacy Policy • Help'),
                       style: GoogleFonts.cairo(
                         fontSize: 12, // slightly bigger than 11 for readability
                         fontWeight: FontWeight.normal,
@@ -197,8 +198,8 @@ class _RoleCardState extends State<_RoleCard> {
       child: GestureDetector(
         onTap: widget.onTap,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          duration: Duration(milliseconds: 200),
+          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 24),
           decoration: BoxDecoration(
             color: theme.cardColor,
             borderRadius: BorderRadius.circular(20),
@@ -210,7 +211,7 @@ class _RoleCardState extends State<_RoleCard> {
               BoxShadow(
                 color: Colors.black.withValues(alpha: _isHovered ? 0.08 : 0.04),
                 blurRadius: _isHovered ? 16 : 8,
-                offset: const Offset(0, 4),
+                offset: Offset(0, 4),
               ),
             ],
           ),
@@ -230,7 +231,7 @@ class _RoleCardState extends State<_RoleCard> {
                   color: AppColors.primary,
                 ),
               ),
-              const SizedBox(width: 20),
+              SizedBox(width: 20),
               // Texts
               Expanded(
                 child: Column(
@@ -243,7 +244,7 @@ class _RoleCardState extends State<_RoleCard> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4),
                     Text(
                       widget.subtitle,
                       style: AppTextStyles.caption.copyWith(

@@ -46,9 +46,10 @@ class _ChatInputWidgetState extends State<ChatInputWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
     // React: bg-white border-t border-[#E3F2FD] px-6 py-4
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         border: Border(
@@ -73,12 +74,12 @@ class _ChatInputWidgetState extends State<ChatInputWidget> {
                   style: AppTextStyles.body,
                   enabled: !widget.isLoading,
                   decoration: InputDecoration(
-                    hintText: 'اكتب رسالة...',
+                    hintText: (isAr ? 'اكتب رسالة...' : 'Type a message...'),
                     hintStyle: AppTextStyles.body.copyWith(
                       color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
                     ),
                     border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(
+                    contentPadding: EdgeInsets.symmetric(
                       horizontal: 20,
                       vertical: 12,
                     ),
@@ -86,7 +87,7 @@ class _ChatInputWidgetState extends State<ChatInputWidget> {
                 ),
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             // React: w-12 h-12 rounded-full bg-gradient-to-r shadow-lg
             Container(
               width: 48,
@@ -96,9 +97,9 @@ class _ChatInputWidgetState extends State<ChatInputWidget> {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF2196F3).withValues(alpha: 0.3),
+                    color: Color(0xFF2196F3).withValues(alpha: 0.3),
                     blurRadius: 8,
-                    offset: const Offset(0, 4),
+                    offset: Offset(0, 4),
                   ),
                 ],
               ),
@@ -106,7 +107,7 @@ class _ChatInputWidgetState extends State<ChatInputWidget> {
                 padding: EdgeInsets.zero,
                 onPressed: widget.isLoading ? null : widget.onSend,
                 icon: widget.isLoading
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(
@@ -115,7 +116,7 @@ class _ChatInputWidgetState extends State<ChatInputWidget> {
                               AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
                       )
-                    : const Icon(Icons.send_rounded,
+                    : Icon(Icons.send_rounded,
                         size: 20, color: Colors.white),
               ),
             ),
