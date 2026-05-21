@@ -61,7 +61,7 @@ dependencies:
   flutter_local_notifications: ^20.1.0
   timeago: ^3.7.1
   fl_chart: ^0.69.0
-  iconly: ^1.0.1
+  # iconly removed due to incompatibility with Flutter 3.44.0
   app_badge_plus: ^1.1.0
   connectivity_plus: ^6.0.3
   path: any

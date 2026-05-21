@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:iconly/iconly.dart';
+// iconly removed — use Flutter `Icons` or FontAwesome instead
 
 import '../../../core/di/dependency_injection.dart';
 import '../../../core/theme/app_colors.dart';
@@ -93,19 +93,19 @@ class _MainLayoutState extends State<MainLayout> {
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         destinations: [
           NavigationDestination(
-            icon: const Icon(IconlyLight.home),
-            selectedIcon: const Icon(IconlyBold.home, color: AppColors.primary),
+            icon: const Icon(Icons.home_outlined),
+            selectedIcon: const Icon(Icons.home_rounded, color: AppColors.primary),
             label: l10n.home,
           ),
           NavigationDestination(
-            icon: const Icon(IconlyLight.chart),
+            icon: const Icon(Icons.bar_chart_outlined),
             selectedIcon:
-                const Icon(IconlyBold.chart, color: AppColors.primary),
+                const Icon(Icons.bar_chart_rounded, color: AppColors.primary),
             label: userRole.isDoctor ? l10n.myPatients : l10n.analysis,
           ),
           NavigationDestination(
-            icon: const Icon(IconlyLight.discovery),
-            selectedIcon: const Icon(IconlyBold.discovery, color: AppColors.primary),
+            icon: const Icon(Icons.explore_outlined),
+            selectedIcon: const Icon(Icons.explore_rounded, color: AppColors.primary),
             label: l10n.aiHelper,
           ),
           NavigationDestination(
@@ -115,7 +115,7 @@ class _MainLayoutState extends State<MainLayout> {
                 return Badge.count(
                   count: count,
                   isLabelVisible: count > 0,
-                  child: const Icon(IconlyLight.chat),
+                  child: const Icon(Icons.chat_bubble_outline_rounded),
                 );
               },
             ),
@@ -125,16 +125,16 @@ class _MainLayoutState extends State<MainLayout> {
                 return Badge.count(
                   count: count,
                   isLabelVisible: count > 0,
-                  child: const Icon(IconlyBold.chat, color: AppColors.primary),
+                  child: const Icon(Icons.chat_bubble_rounded, color: AppColors.primary),
                 );
               },
             ),
             label: l10n.chats,
           ),
           NavigationDestination(
-            icon: const Icon(IconlyLight.profile),
+            icon: const Icon(Icons.person_outline_rounded),
             selectedIcon:
-                const Icon(IconlyBold.profile, color: AppColors.primary),
+                const Icon(Icons.person_rounded, color: AppColors.primary),
             label: l10n.profile,
           ),
         ],
