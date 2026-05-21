@@ -1,11 +1,10 @@
 name: Build LUMO Debug APK
 
-# This workflow triggers every time you push to the main branch
 on:
   push:
     branches:
       - main
-      - master # Include master just in case your default branch uses it
+      - master
 
 jobs:
   build:
@@ -13,37 +12,37 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Check out the code from your repository
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 2. Set up Java (Required for Android builds)
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
-          cache: 'gradle' # Speeds up future builds
+          cache: 'gradle'
 
-      # 3. Set up the Flutter SDK
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.32.0'   # ← ثابت ومش بيتغير
           channel: 'stable'
-          cache: true # Speeds up the SDK download in future runs
+          cache: true
 
-      # 4. Fetch dependencies
       - name: Install Dependencies
         run: flutter pub get
 
-      # 5. Build the Debug APK
+      # تحقق إن الكود سليم قبل البناء
+      - name: Analyze Code
+        run: flutter analyze --no-fatal-infos
+        continue-on-error: true
+
       - name: Build APK
         run: flutter build apk --debug
 
-      # 6. Upload the generated APK as an artifact so you can download it
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: LUMO-Debug-APK
           path: build/app/outputs/flutter-apk/app-debug.apk
-          retention-days: 7 # Keeps the file for 7 days to save GitHub storage space
+          retention-days: 7
