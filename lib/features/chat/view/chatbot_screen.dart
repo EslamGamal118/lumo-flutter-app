@@ -6,7 +6,6 @@ import '../../../l10n/app_localizations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../shared/providers/auth_provider.dart';
-import '../../../data/models/parent_model.dart';
 import '../../ai_helper/view_model/ai_view_model.dart';
 import '../../ai_helper/view/ai_message_bubble.dart';
 import '../../home/view_model/main_layout_view_model.dart';
@@ -39,17 +38,9 @@ class _ChatbotScreenState extends State<ChatbotScreen>
 
     final authProvider = context.read<AuthProvider>();
     final userId = authProvider.currentUser?.id ?? 0;
-    final user = authProvider.currentUser;
-    String? childName;
-    if (user is ParentModel) {
-      childName = user.childName;
-    }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _viewModel.loadChatHistory(userId);
-      if (childName != null && childName.isNotEmpty) {
-        _viewModel.startSession(childName);
-      }
     });
 
     _pulseController = AnimationController(

@@ -322,14 +322,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         context, RouteNames.doctorPatients);
                                   },
                                 ),
-                                const SizedBox(height: 8),
-                                _buildQuickAction(
-                                  icon: Icons.local_hospital_rounded,
-                                  iconColor: Colors.orange,
-                                  title: 'إدارة العيادة',
-                                  subtitle: 'تعديل مواعيدك وموقع العيادة',
-                                  onTap: () {},
-                                ),
+
                               ]
                             : [
                                 _buildQuickAction(

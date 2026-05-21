@@ -1,7 +1,7 @@
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:flutter_app_badger/flutter_app_badger.dart';
+import 'package:app_badge_plus/app_badge_plus.dart';
 import '../../core/services/notification_service.dart';
 import '../../data/repositories/notification_repository.dart';
 
@@ -41,7 +41,7 @@ class NotificationProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _notifications = await _repository!.getNotifications();
+      _notifications = await _repository.getNotifications();
       // Update unread count based on logic (handling both bool and int from backend)
       _unreadCount = _notifications.where((n) {
         final isRead = n['is_read'];
@@ -61,7 +61,7 @@ class NotificationProvider extends ChangeNotifier {
     if (_repository == null) return;
     
     try {
-      await _repository!.markNotificationsAsRead();
+      await _repository.markNotificationsAsRead();
       _unreadCount = 0;
       _updateAppBadge();
       notifyListeners();
@@ -78,7 +78,7 @@ class NotificationProvider extends ChangeNotifier {
     if (_repository == null) return;
     
     try {
-      await _repository!.deleteNotifications(date);
+      await _repository.deleteNotifications(date);
       await fetchNotifications();
     } catch (e) {
       debugPrint('Failed to delete notifications: $e');
@@ -114,12 +114,12 @@ class NotificationProvider extends ChangeNotifier {
   /// Updates the app icon badge based on the current unread count.
   void _updateAppBadge() {
     try {
-      // FlutterAppBadger only supports Android and iOS
+      // AppBadgePlus supports Android and iOS
       if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
         if (_unreadCount > 0) {
-          FlutterAppBadger.updateBadgeCount(_unreadCount);
+          AppBadgePlus.updateBadge(_unreadCount);
         } else {
-          FlutterAppBadger.removeBadge();
+          AppBadgePlus.updateBadge(0);
         }
       }
     } catch (e) {

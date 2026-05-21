@@ -152,19 +152,33 @@ class AIRepository {
 
       final data = response.data;
       debugPrint('🤖 RAW BACKEND RESPONSE: $data');
+
+      // ✅ Guard: empty or null response
+      if (data == null || (data is String && data.trim().isEmpty)) {
+        throw Exception(
+          'الخادم لم يُرجع استجابة. تأكد أن النموذج تم تحميله وأن الجلسة بدأت.',
+        );
+      }
+
       if (data is Map<String, dynamic>) {
-        // Strictly use the backend's provided answer string without modification
-        aiResponse = data['answer']?.toString() ??
-            data['message']?.toString() ??
-            aiResponse;
+        // Guard the 'answer' field specifically
+        final answer = data['answer']?.toString() ?? '';
+        if (answer.trim().isEmpty) {
+          throw Exception('الاستجابة فارغة من الخادم. حاول مرة أخرى.');
+        }
+        aiResponse = answer;
         categoryLabel = data['category_label']?.toString();
         urgency = data['urgency']?.toString();
         needsClarification = data['needs_clarification'] == true;
-        clarificationQuestion =
-            data['clarification_question']?.toString();
+        clarificationQuestion = data['clarification_question']?.toString();
         debugPrint('🤖 EXTRACTED aiResponse: $aiResponse');
       } else {
-        aiResponse = data?.toString() ?? aiResponse;
+        // If backend returned non-map (string) but non-empty, use it
+        final text = data?.toString() ?? '';
+        if (text.trim().isEmpty) {
+          throw Exception('الاستجابة فارغة من الخادم. حاول مرة أخرى.');
+        }
+        aiResponse = text;
         debugPrint('🤖 EXTRACTED (from string) aiResponse: $aiResponse');
       }
     } on DioException catch (e) {

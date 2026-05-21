@@ -25,14 +25,13 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.32.0'   # ← ثابت ومش بيتغير
+          flutter-version: '3.44.0'
           channel: 'stable'
           cache: true
 
       - name: Install Dependencies
         run: flutter pub get
 
-      # تحقق إن الكود سليم قبل البناء
       - name: Analyze Code
         run: flutter analyze --no-fatal-infos
         continue-on-error: true

@@ -36,9 +36,7 @@ class DoctorPatientDetail extends StatefulWidget {
 class _DoctorPatientDetailState extends State<DoctorPatientDetail> {
   // New State Variable for the Robot Mock Flow
   bool hasSessionData = false;
-  int _selectedFilterIndex = 0; // 0=All, 1=Completed, 2=Pending
-  
-  bool get _isAr => Localizations.localeOf(context).languageCode == 'ar';
+  String _selectedFilter = 'الكل';
   
   bool _isFabExpanded = false;
   Timer? _fabCollapseTimer;
@@ -169,7 +167,7 @@ class _DoctorPatientDetailState extends State<DoctorPatientDetail> {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
-        isComplete ? (_isAr ? 'مكتملة' : 'Completed') : (_isAr ? 'قيد الانتظار' : 'Pending'),
+        isComplete ? 'مكتملة' : 'قيد الانتظار',
         style: TextStyle(
           color: foregroundColor,
           fontWeight: FontWeight.bold,
@@ -194,7 +192,7 @@ class _DoctorPatientDetailState extends State<DoctorPatientDetail> {
         Expanded(
           child: _buildKpiCard(
             icon: Icons.visibility_rounded,
-            label: _isAr ? 'متوسط التركيز' : 'Avg Focus',
+            label: 'متوسط التركيز',
             value: '${avgFocus.toInt()}%',
             color: const Color(0xFF10B981),
           ),
@@ -203,7 +201,7 @@ class _DoctorPatientDetailState extends State<DoctorPatientDetail> {
         Expanded(
           child: _buildKpiCard(
             icon: Icons.event_note_rounded,
-            label: _isAr ? 'إجمالي الجلسات' : 'Total Sessions',
+            label: 'إجمالي الجلسات',
             value: '${allSessions.length}',
             color: AppColors.primary,
           ),
@@ -212,7 +210,7 @@ class _DoctorPatientDetailState extends State<DoctorPatientDetail> {
         Expanded(
           child: _buildKpiCard(
             icon: Icons.check_circle_outline_rounded,
-            label: _isAr ? 'مكتملة' : 'Completed',
+            label: 'مكتملة',
             value: '${completedSessions.length}',
             color: const Color(0xFF22C55E),
           ),
@@ -278,12 +276,12 @@ class _DoctorPatientDetailState extends State<DoctorPatientDetail> {
     Widget content;
     
     if (chartSessions.isEmpty) {
-      content = SizedBox(
+      content = const SizedBox(
         height: 180,
         child: Center(
           child: Text(
-            _isAr ? "لا توجد بيانات كافية لعرض الرسم البياني" : "Not enough data for chart",
-            style: const TextStyle(color: Colors.grey, fontFamily: 'Cairo'),
+            "لا توجد بيانات كافية لعرض الرسم البياني",
+            style: TextStyle(color: Colors.grey, fontFamily: 'Cairo'),
           ),
         ),
       );
@@ -411,9 +409,9 @@ class _DoctorPatientDetailState extends State<DoctorPatientDetail> {
             children: [
               Icon(Icons.trending_up_rounded, color: AppColors.primary, size: 22),
               const SizedBox(width: 8),
-              Text(
-                _isAr ? 'تطور التركيز عبر الجلسات' : 'Focus Evolution Trend',
-                style: const TextStyle(
+              const Text(
+                'تطور التركيز عبر الجلسات',
+                style: TextStyle(
                   fontFamily: 'Cairo',
                   fontWeight: FontWeight.bold,
                   fontSize: 15,
@@ -622,20 +620,14 @@ class _DoctorPatientDetailState extends State<DoctorPatientDetail> {
           }
 
           // Apply filter
-          final sessions = _selectedFilterIndex == 0
+          final sessions = _selectedFilter == 'الكل'
               ? allSessions
-              : _selectedFilterIndex == 1
+              : _selectedFilter == 'مكتملة'
                   ? allSessions.where((s) => s.isComplete).toList()
                   : allSessions.where((s) => !s.isComplete).toList();
 
           // Cumulative focus data (completed sessions only, reversed for chronological order)
           final completedSessions = allSessions.where((s) => s.isComplete).toList().reversed.toList();
-
-          final filterLabels = [
-            _isAr ? 'الكل' : 'All',
-            _isAr ? 'مكتملة' : 'Completed',
-            _isAr ? 'قيد الانتظار' : 'Pending',
-          ];
 
           return RefreshIndicator(
             onRefresh: _loadPatientSessions,
@@ -656,9 +648,8 @@ class _DoctorPatientDetailState extends State<DoctorPatientDetail> {
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
-                      children: List.generate(filterLabels.length, (index) {
-                        final label = filterLabels[index];
-                        final isSelected = _selectedFilterIndex == index;
+                      children: ['الكل', 'مكتملة', 'قيد الانتظار'].map((label) {
+                        final isSelected = _selectedFilter == label;
                         return Padding(
                           padding: const EdgeInsetsDirectional.only(end: 8),
                           child: FilterChip(
@@ -669,7 +660,7 @@ class _DoctorPatientDetailState extends State<DoctorPatientDetail> {
                               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                             )),
                             selected: isSelected,
-                            onSelected: (_) => setState(() => _selectedFilterIndex = index),
+                            onSelected: (_) => setState(() => _selectedFilter = label),
                             selectedColor: AppColors.primary,
                             backgroundColor: AppColors.primary.withValues(alpha: 0.08),
                             checkmarkColor: Colors.white,
@@ -681,7 +672,7 @@ class _DoctorPatientDetailState extends State<DoctorPatientDetail> {
                             ),
                           ),
                         );
-                      }),
+                      }).toList(),
                     ),
                   ),
                 ),
@@ -716,7 +707,7 @@ class _DoctorPatientDetailState extends State<DoctorPatientDetail> {
                             vertical: 12,
                           ),
                           title: Text(
-                            _isAr ? 'جلسة #$displayIndex' : 'Session #$displayIndex',
+                            'جلسة #$displayIndex',
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontFamily: 'Cairo',

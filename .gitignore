@@ -47,3 +47,7 @@ app.*.map.json
 lumo*.json
 
 venv/
+
+*.py
+
+chatbot*.md

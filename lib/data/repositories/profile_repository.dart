@@ -37,7 +37,7 @@ class ProfileRepository {
     // ── current user: REST API ──
     if (_remoteDataSource != null && isMyProfile) {
       try {
-        restProfile = await _remoteDataSource!.getProfile();
+        restProfile = await _remoteDataSource.getProfile();
       } catch (e) {
         final isUnauth = e.toString().toLowerCase().contains('unauthenticated') ||
             e.toString().contains('401');
@@ -143,7 +143,7 @@ class ProfileRepository {
   }) async {
     if (_remoteDataSource != null) {
       try {
-        final updatedUser = await _remoteDataSource!.updateProfile(
+        final updatedUser = await _remoteDataSource.updateProfile(
           userId: userId,
           name: name,
           phone: phone,
@@ -211,7 +211,7 @@ class ProfileRepository {
 
   Future<void> toggleFollow(int userId) async {
     if (_remoteDataSource != null) {
-      await _remoteDataSource!.toggleFollow(userId);
+      await _remoteDataSource.toggleFollow(userId);
     }
   }
 
@@ -228,7 +228,7 @@ class ProfileRepository {
   Future<List<UserModel>> getFollowers(int userId) async {
     if (_remoteDataSource != null) {
       try {
-        return await _remoteDataSource!.getFollowers(userId);
+        return await _remoteDataSource.getFollowers(userId);
       } catch (e) {
         debugPrint('REST getFollowers failed: $e');
       }
@@ -239,7 +239,7 @@ class ProfileRepository {
   Future<List<UserModel>> getFollowing(int userId) async {
     if (_remoteDataSource != null) {
       try {
-        return await _remoteDataSource!.getFollowing(userId);
+        return await _remoteDataSource.getFollowing(userId);
       } catch (e) {
         debugPrint('REST getFollowing failed: $e');
       }
