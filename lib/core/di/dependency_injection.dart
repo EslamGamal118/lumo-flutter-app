@@ -189,6 +189,8 @@ class DependencyInjection {
     getIt.registerLazySingleton<AIRepository>(
       () => AIRepository(
         getIt<LocalDataSource>(),
+        getIt<PatientRepository>(),
+        getIt<SessionRepository>(),
       ),
     );
 

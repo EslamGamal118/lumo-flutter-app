@@ -10,7 +10,7 @@ import 'package:http/http.dart' as http;
 ///   - Image Analysis  → :8001
 ///   - Story / Audio   → :8081
 class LumoApiService {
-  static const String _host = '172.189.165.242';
+  static const String _host = '20.230.160.202';
 
   // ─── Base URIs ────────────────────────────────────────────────────────────
 

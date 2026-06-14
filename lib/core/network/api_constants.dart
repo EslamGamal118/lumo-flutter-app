@@ -1,6 +1,6 @@
 class ApiConstants {
   // Base URLs
-  static const String baseUrl = 'https://clickexpress.delivery/api';
+  static const String baseUrl = 'https://app2.clickexpress.delivery/api';
 
   // Authentication Endpoints
   static const String login = '/auth/login';

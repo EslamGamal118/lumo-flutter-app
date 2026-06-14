@@ -815,7 +815,7 @@ class _InlineSessionDetailsState extends State<_InlineSessionDetails>
             labelStyle: AppTextStyles.h3.copyWith(fontWeight: FontWeight.bold),
             unselectedLabelStyle: AppTextStyles.body,
             tabs: const [
-              Tab(text: "التحليل السلوكي والانفعالي", icon: Icon(Icons.analytics_outlined)),
+              Tab(text: "التحليل السلوكي", icon: Icon(Icons.analytics_outlined)),
               Tab(
                   text: "التقرير السريري",
                   icon: Icon(Icons.medical_information_outlined)),

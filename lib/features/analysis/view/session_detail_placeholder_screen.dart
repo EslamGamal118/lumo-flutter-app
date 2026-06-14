@@ -6,7 +6,6 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../data/models/session_analysis_model.dart';
 import '../../session/view_model/session_view_model.dart';
 
-
 class SessionDetailPlaceholderScreen extends StatefulWidget {
   final int? displayIndex;
   const SessionDetailPlaceholderScreen({super.key, this.displayIndex});
@@ -68,7 +67,9 @@ class _SessionDetailPlaceholderScreenState
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
-          widget.displayIndex != null ? 'جلسة #${widget.displayIndex}' : _sessionData.title,
+          widget.displayIndex != null
+              ? 'جلسة #${widget.displayIndex}'
+              : _sessionData.title,
           style: AppTextStyles.h2.copyWith(fontWeight: FontWeight.w700),
         ),
         bottom: TabBar(
@@ -80,34 +81,14 @@ class _SessionDetailPlaceholderScreenState
           labelStyle: AppTextStyles.h3.copyWith(fontWeight: FontWeight.bold),
           unselectedLabelStyle: AppTextStyles.body,
           isScrollable: true,
-          tabs: [
+          tabs: const [
             Tab(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: Wrap(
-                  direction: Axis.vertical,
-                  alignment: WrapAlignment.center,
-                  children: const [
-                    Icon(Icons.analytics_outlined),
-                    SizedBox(height: 4),
-                    Text("التحليل السلوكي\nوالانفعالي", textAlign: TextAlign.center),
-                  ],
-                ),
-              ),
+              icon: Icon(Icons.analytics_outlined),
+              text: "التحليل السلوكي",
             ),
             Tab(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: Wrap(
-                  direction: Axis.vertical,
-                  alignment: WrapAlignment.center,
-                  children: const [
-                    Icon(Icons.medical_information_outlined),
-                    SizedBox(height: 4),
-                    Text("التقرير الطبي", textAlign: TextAlign.center),
-                  ],
-                ),
-              ),
+              icon: Icon(Icons.medical_information_outlined),
+              text: "التقرير الطبي",
             ),
           ],
         ),
@@ -143,7 +124,9 @@ class _SessionDetailPlaceholderScreenState
   }
 
   Widget _buildFocusAnalysisBar() {
-    final focusPct = ((_sessionData.averageFocus ?? _sessionData.focusedPercentage) * 100).toInt();
+    final focusPct =
+        ((_sessionData.averageFocus ?? _sessionData.focusedPercentage) * 100)
+            .toInt();
     final notFocusPct = 100 - focusPct;
 
     // Determine dominant gaze direction
@@ -158,12 +141,23 @@ class _SessionDetailPlaceholderScreenState
         }
       });
       switch (topKey.toUpperCase()) {
-        case 'CENTER': dominantGaze = 'المنتصف'; break;
-        case 'UP': dominantGaze = 'أعلى'; break;
-        case 'DOWN': dominantGaze = 'أسفل'; break;
-        case 'LEFT': dominantGaze = 'يسار'; break;
-        case 'RIGHT': dominantGaze = 'يمين'; break;
-        default: dominantGaze = topKey;
+        case 'CENTER':
+          dominantGaze = 'المنتصف';
+          break;
+        case 'UP':
+          dominantGaze = 'أعلى';
+          break;
+        case 'DOWN':
+          dominantGaze = 'أسفل';
+          break;
+        case 'LEFT':
+          dominantGaze = 'يسار';
+          break;
+        case 'RIGHT':
+          dominantGaze = 'يمين';
+          break;
+        default:
+          dominantGaze = topKey;
       }
     }
 
@@ -241,8 +235,10 @@ class _SessionDetailPlaceholderScreenState
                         Color(0xFF94A3B8),
                       ],
                       stops: [
-                        (_sessionData.averageFocus ?? _sessionData.focusedPercentage),
-                        (_sessionData.averageFocus ?? _sessionData.focusedPercentage),
+                        (_sessionData.averageFocus ??
+                            _sessionData.focusedPercentage),
+                        (_sessionData.averageFocus ??
+                            _sessionData.focusedPercentage),
                       ],
                     ).createShader(bounds);
                   },
@@ -281,12 +277,14 @@ class _SessionDetailPlaceholderScreenState
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.2)),
+              border: Border.all(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.2)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.center_focus_strong_rounded, size: 18, color: Color(0xFF059669)),
+                const Icon(Icons.center_focus_strong_rounded,
+                    size: 18, color: Color(0xFF059669)),
                 const SizedBox(width: 8),
                 Text(
                   'اتجاه النظر الغالب: $dominantGaze',
@@ -363,7 +361,8 @@ class _SessionDetailPlaceholderScreenState
               style: SegmentedButton.styleFrom(
                 selectedForegroundColor: Colors.white,
                 selectedBackgroundColor: AppColors.primary,
-                backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                backgroundColor:
+                    Theme.of(context).colorScheme.surfaceContainerHighest,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8)),
               ),
@@ -528,20 +527,34 @@ class _SessionDetailPlaceholderScreenState
     }
 
     // Dynamic Voice Text
-    final speechText = _sessionData.analytics?['speech_text']?.toString().trim() ?? '';
-    final storyTrait = _sessionData.analytics?['story_trait']?.toString().trim() ?? '';
+    final speechText =
+        _sessionData.analytics?['speech_text']?.toString().trim() ?? '';
+    final storyTrait =
+        _sessionData.analytics?['story_trait']?.toString().trim() ?? '';
     final isCorrect = _sessionData.analytics?['is_correct'] as bool?;
-    
+
     // The backend might return the keys with empty strings, nulls, or default booleans
     // even for image-only sessions. So we check if there's actual text.
-    final bool hasValidSpeech = speechText.isNotEmpty && speechText.toLowerCase() != 'null';
-    final bool hasValidTrait = storyTrait.isNotEmpty && storyTrait.toLowerCase() != 'null';
+    final bool hasValidSpeech =
+        speechText.isNotEmpty && speechText.toLowerCase() != 'null';
+    final bool hasValidTrait =
+        storyTrait.isNotEmpty && storyTrait.toLowerCase() != 'null';
     final hasVoiceData = hasValidSpeech || hasValidTrait;
 
     // Focus metrics
-    final focusPct = ((_sessionData.averageFocus ?? _sessionData.focusedPercentage) * 100).toInt();
-    final focusStatus = focusPct > 70 ? 'مستقر' : focusPct > 40 ? 'متوسط' : 'ضعيف';
-    final focusStatusColor = focusPct > 70 ? const Color(0xFF22C55E) : focusPct > 40 ? const Color(0xFFF59E0B) : const Color(0xFFEF4444);
+    final focusPct =
+        ((_sessionData.averageFocus ?? _sessionData.focusedPercentage) * 100)
+            .toInt();
+    final focusStatus = focusPct > 70
+        ? 'مستقر'
+        : focusPct > 40
+            ? 'متوسط'
+            : 'ضعيف';
+    final focusStatusColor = focusPct > 70
+        ? const Color(0xFF22C55E)
+        : focusPct > 40
+            ? const Color(0xFFF59E0B)
+            : const Color(0xFFEF4444);
 
     // Emotion status
     final emotionLabel = topEmotion?.label ?? 'غير محددة';
@@ -578,14 +591,17 @@ class _SessionDetailPlaceholderScreenState
             ),
             child: Row(
               children: [
-                const Icon(Icons.medical_information_rounded, color: Colors.white, size: 28),
+                const Icon(Icons.medical_information_rounded,
+                    color: Colors.white, size: 28),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        widget.displayIndex != null ? 'تقرير جلسة #${widget.displayIndex}' : 'التقرير الطبي',
+                        widget.displayIndex != null
+                            ? 'تقرير جلسة #${widget.displayIndex}'
+                            : 'التقرير الطبي',
                         style: const TextStyle(
                           fontFamily: 'Cairo',
                           fontWeight: FontWeight.bold,
@@ -615,14 +631,15 @@ class _SessionDetailPlaceholderScreenState
             icon: Icons.sentiment_satisfied_alt_rounded,
             title: 'الحالة المزاجية الغالبة',
             subtitle: 'Emotional Intelligence Model',
-            trailing: _buildStatusChip(emotionLabel, topEmotion?.color ?? const Color(0xFF22C55E)),
+            trailing: _buildStatusChip(
+                emotionLabel, topEmotion?.color ?? const Color(0xFF22C55E)),
             content: Text(
               'الحالة المزاجية الغالبة: $emotionLabel بنسبة $emotionPct%.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                height: 1.7,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                fontFamily: 'Cairo',
-              ),
+                    height: 1.7,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontFamily: 'Cairo',
+                  ),
             ),
           ),
           _buildReportItem(
@@ -647,10 +664,10 @@ class _SessionDetailPlaceholderScreenState
             content: Text(
               'تمركزت نقاط النظر نحو الروبوت بنسبة $focusPct%.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                height: 1.7,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                fontFamily: 'Cairo',
-              ),
+                    height: 1.7,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontFamily: 'Cairo',
+                  ),
             ),
           ),
 
@@ -661,14 +678,16 @@ class _SessionDetailPlaceholderScreenState
               icon: Icons.lightbulb_outline_rounded,
               title: 'التوصيات',
               subtitle: 'AI-Generated Recommendations',
-              trailing: _buildStatusChip('${_sessionData.recommendations.length}', const Color(0xFF8B5CF6)),
+              trailing: _buildStatusChip(
+                  '${_sessionData.recommendations.length}',
+                  const Color(0xFF8B5CF6)),
               content: Text(
                 _sessionData.recommendations.map((r) => '• $r').join('\n'),
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  height: 1.7,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  fontFamily: 'Cairo',
-                ),
+                      height: 1.7,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontFamily: 'Cairo',
+                    ),
               ),
             ),
           ],
@@ -690,12 +709,16 @@ class _SessionDetailPlaceholderScreenState
               },
               icon: const Icon(Icons.picture_as_pdf_rounded),
               label: const Text('تصدير التقرير كـ PDF',
-                  style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold, fontSize: 15)),
+                  style: TextStyle(
+                      fontFamily: 'Cairo',
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14)),
                 elevation: 0,
               ),
             ),
@@ -738,15 +761,12 @@ class _SessionDetailPlaceholderScreenState
       );
     }
 
-    final Color correctnessColor = isCorrect == true
-        ? scheme.tertiary
-        : scheme.error;
-    final IconData correctnessIcon = isCorrect == true
-        ? Icons.check_circle_rounded
-        : Icons.cancel_rounded;
-    final String correctnessText = isCorrect == true
-        ? 'إجابة صحيحة'
-        : 'إجابة خاطئة';
+    final Color correctnessColor =
+        isCorrect == true ? scheme.tertiary : scheme.error;
+    final IconData correctnessIcon =
+        isCorrect == true ? Icons.check_circle_rounded : Icons.cancel_rounded;
+    final String correctnessText =
+        isCorrect == true ? 'إجابة صحيحة' : 'إجابة خاطئة';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -860,7 +880,8 @@ class _SessionDetailPlaceholderScreenState
       child: Column(
         children: [
           ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             leading: Icon(icon, color: scheme.primary, size: 26),
             title: Text(
               title,

@@ -7,7 +7,7 @@ void main() async {
   final client = HttpClient();
   
   try {
-    final request = await client.getUrl(Uri.parse('https://clickexpress.delivery/api/home'));
+    final request = await client.getUrl(Uri.parse('https://app2.clickexpress.delivery/api/home'));
     request.headers.add('Authorization', 'Bearer $token');
     request.headers.add('Accept', 'application/json');
     

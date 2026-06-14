@@ -78,7 +78,7 @@ class AvatarWidget extends StatelessWidget {
 
       // If the backend returns localhost URLs, rewrite them
       if (resolvedUrl.contains('localhost') || resolvedUrl.contains('127.0.0.1')) {
-        resolvedUrl = resolvedUrl.replaceFirst(RegExp(r'http://(localhost|127\.0\.0\.1)(:\d+)?'), 'https://clickexpress.delivery');
+        resolvedUrl = resolvedUrl.replaceFirst(RegExp(r'http://(localhost|127\.0\.0\.1)(:\d+)?'), 'https://app2.clickexpress.delivery');
       }
 
       // If it's a relative API path
@@ -86,7 +86,7 @@ class AvatarWidget extends StatelessWidget {
         if (!resolvedUrl.startsWith('/')) {
           resolvedUrl = '/$resolvedUrl';
         }
-        resolvedUrl = 'https://clickexpress.delivery$resolvedUrl';
+        resolvedUrl = 'https://app2.clickexpress.delivery$resolvedUrl';
       }
 
       // Network image

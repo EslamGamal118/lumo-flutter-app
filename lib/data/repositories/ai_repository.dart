@@ -3,20 +3,25 @@ import 'package:flutter/foundation.dart';
 
 import '../datasources/local_data_source.dart';
 import '../models/ai_message_model.dart';
+import '../models/parent_model.dart';
+import '../repositories/patient_repository.dart';
+import '../repositories/session_repository.dart';
 
 /// Handles the AI chat flow.
 ///
 /// Sends questions to the Autism Chatbot API (v4.1.0) running at
-/// http://172.189.165.242:8080 and persists the conversation locally
+/// http://20.230.160.202:8000 and persists the conversation locally
 /// for offline history access.
 class AIRepository {
   final LocalDataSource _localDataSource;
+  final PatientRepository _patientRepository;
+  final SessionRepository _sessionRepository;
 
   /// Dedicated Dio instance pointing at the chatbot micro-service.
   late final Dio _chatbotDio;
 
   /// Base URL for the chatbot API.
-  static const String _chatbotBaseUrl = 'http://172.189.165.242:8080';
+  static const String _chatbotBaseUrl = 'http://20.230.160.202:8000';
 
   /// Tracks per-user/per-patient started sessions instead of a single global flag.
   final Set<String> _startedSessions = {};
@@ -28,7 +33,7 @@ class AIRepository {
     return _startedSessions.any((key) => key == currentUserId || key.startsWith('${currentUserId}_'));
   }
 
-  AIRepository(this._localDataSource) {
+  AIRepository(this._localDataSource, this._patientRepository, this._sessionRepository) {
     _chatbotDio = Dio(BaseOptions(
       baseUrl: _chatbotBaseUrl,
       connectTimeout: const Duration(seconds: 120),
@@ -153,6 +158,154 @@ class AIRepository {
     }
   }
 
+  // ==================== DYNAMIC CONTEXT BUILDER ====================
+
+  /// Builds a rich context string from real app data (patients, sessions,
+  /// child info) so the LLM can answer domain-specific questions.
+  Future<String> _buildDynamicContext({
+    required String resolvedRole,
+    required String childName,
+  }) async {
+    final parts = <String>[];
+
+    try {
+      if (resolvedRole == 'doctor') {
+        // ── Doctor: fetch patients and their recent sessions ──
+        final patients = await _patientRepository.getDoctorPatients();
+        if (patients.isNotEmpty) {
+          parts.add('المرضى المرتبطون بهذا الطبيب (${patients.length} مريض):');
+          for (final patient in patients) {
+            String patientLabel = patient.name;
+            if (patient is ParentModel && patient.childName.isNotEmpty) {
+              patientLabel = 'الطفل: ${patient.childName} (ولي الأمر: ${patient.name})';
+            }
+            parts.add('- $patientLabel');
+
+            // Fetch patient profile/insights
+            try {
+              final insights = await _patientRepository.getPatientInsights(patient.id.toString());
+              if (insights.isNotEmpty) {
+                final excludedKeys = ['id', 'user_id', 'created_at', 'updated_at', 'doctor_id'];
+                bool hasInsights = false;
+                for (final entry in insights.entries) {
+                  if (excludedKeys.contains(entry.key.toLowerCase())) continue;
+                  if (entry.value != null && entry.value.toString().isNotEmpty && entry.value.toString() != 'null') {
+                    if (!hasInsights) {
+                      parts.add('  ملف الحالة:');
+                      hasInsights = true;
+                    }
+                    parts.add('    ${entry.key}: ${entry.value}');
+                  }
+                }
+              }
+            } catch (e) {
+              debugPrint('⚠️ Failed to fetch insights for patient ${patient.id}: $e');
+            }
+
+            // Fetch last 5 sessions for each patient
+            try {
+              final sessions = await _sessionRepository.getPatientSessions(patient.id);
+              if (sessions.isNotEmpty) {
+                final recentSessions = sessions.length > 5
+                    ? sessions.sublist(sessions.length - 5)
+                    : sessions;
+                parts.add('  آخر ${recentSessions.length} جلسات:');
+                for (final session in recentSessions) {
+                  final status = session.isComplete ? 'مكتملة' : (session.status ?? 'قيد التنفيذ');
+                  final date = session.date ?? session.startedAt?.split('T').first ?? 'غير محدد';
+                  parts.add('  • التاريخ: $date | الحالة: $status');
+                  if (session.duration.isNotEmpty) {
+                    parts.add('    المدة: ${session.duration}');
+                  }
+                  if (session.engagementLevel.isNotEmpty) {
+                    parts.add('    التفاعل: ${session.engagementLevel}');
+                  }
+                  if (session.summary.isNotEmpty) {
+                    parts.add('    الملخص: ${session.summary}');
+                  }
+                  if (session.focusedPercentage > 0) {
+                    parts.add('    التركيز: ${(session.focusedPercentage * 100).toStringAsFixed(0)}%');
+                  }
+                  if (session.emotionDistribution.isNotEmpty) {
+                    final significant = session.emotionDistribution
+                        .where((e) => e.percentage > 0.05)
+                        .toList();
+                    if (significant.isNotEmpty) {
+                      significant.sort((a, b) => b.percentage.compareTo(a.percentage));
+                      final emotions = significant
+                          .map((e) => '${e.label} (${(e.percentage * 100).toInt()}%)')
+                          .join(', ');
+                      parts.add('    المشاعر البارزة: $emotions');
+                    } else {
+                      parts.add('    المشاعر: هادئ/محايد');
+                    }
+                  }
+                  if (session.recommendations.isNotEmpty) {
+                    parts.add('    التوصيات: ${session.recommendations.join("، ")}');
+                  }
+                }
+              } else {
+                parts.add('  لا توجد جلسات مسجلة بعد.');
+              }
+            } catch (e) {
+              debugPrint('⚠️ Failed to fetch sessions for patient ${patient.id}: $e');
+            }
+          }
+        } else {
+          parts.add('لا يوجد مرضى مرتبطون بهذا الطبيب حالياً.');
+        }
+      } else {
+        // ── Parent: include child name and own sessions ──
+        if (childName.isNotEmpty) {
+          parts.add('معلومات الطفل الحالي: $childName');
+        }
+        try {
+          final sessions = await _sessionRepository.getMySessions();
+          if (sessions.isNotEmpty) {
+            final recentSessions = sessions.length > 5
+                ? sessions.sublist(sessions.length - 5)
+                : sessions;
+            parts.add('آخر ${recentSessions.length} جلسات:');
+            for (final session in recentSessions) {
+              final status = session.isComplete ? 'مكتملة' : (session.status ?? 'قيد التنفيذ');
+              final date = session.date ?? session.startedAt?.split('T').first ?? 'غير محدد';
+              parts.add('• التاريخ: $date | الحالة: $status');
+              if (session.duration.isNotEmpty) {
+                parts.add('  المدة: ${session.duration}');
+              }
+              if (session.summary.isNotEmpty) {
+                parts.add('  الملخص: ${session.summary}');
+              }
+              if (session.focusedPercentage > 0) {
+                parts.add('  التركيز: ${(session.focusedPercentage * 100).toStringAsFixed(0)}%');
+              }
+              if (session.emotionDistribution.isNotEmpty) {
+                final significant = session.emotionDistribution
+                    .where((e) => e.percentage > 0.05)
+                    .toList();
+                if (significant.isNotEmpty) {
+                  significant.sort((a, b) => b.percentage.compareTo(a.percentage));
+                  final emotions = significant
+                      .map((e) => '${e.label} (${(e.percentage * 100).toInt()}%)')
+                      .join(', ');
+                  parts.add('  المشاعر البارزة: $emotions');
+                } else {
+                  parts.add('  المشاعر: هادئ/محايد');
+                }
+              }
+            }
+          }
+        } catch (e) {
+          debugPrint('⚠️ Failed to fetch parent sessions: $e');
+        }
+      }
+    } catch (e) {
+      debugPrint('⚠️ Failed to build dynamic context: $e');
+    }
+
+    return parts.join('\n');
+  }
+
   // ==================== AI CHAT ====================
 
   /// Sends [content] to the chatbot API and persists both sides of the
@@ -205,14 +358,43 @@ class AIRepository {
         }
       }
 
+      // ── Resolve user display name for the AI prompt ──
+      final resolvedUserName = (currentUser?['name']?.toString()
+              ?? currentUser?['data']?['name']?.toString()
+              ?? currentUser?['full_name']?.toString()
+              ?? 'المستخدم')
+          .toString();
+
+      // ── Map role to Arabic for the backend prompt ──
+      final arabicRole = resolvedRole == 'doctor' ? 'طبيب' : 'ولي أمر';
+
+      // ── Build chat_history from local storage (last 20 messages) ──
+      final localHistory = await getChatHistory(userId);
+      final chatHistory = <Map<String, String>>[];
+      final historySlice = localHistory.length > 20
+          ? localHistory.sublist(localHistory.length - 20)
+          : localHistory;
+      for (final msg in historySlice) {
+        chatHistory.add({
+          'role': msg.isUser ? 'user' : 'assistant',
+          'content': msg.content,
+        });
+      }
+
+      // ── Build dynamic context from real app data ──
+      final dynamicContext = await _buildDynamicContext(
+        resolvedRole: resolvedRole,
+        childName: savedChildName,
+      );
+      debugPrint('📋 Dynamic context built (${dynamicContext.length} chars)');
+
       Future<Response<dynamic>> postChat() {
-        return _chatbotDio.post('/chat', data: {
+        return _chatbotDio.post('/ask', data: {
           "question": content,
-          "user_id": userId.toString(),
-          "user_role": resolvedRole,
-          if (savedChildName.trim().isNotEmpty) "child_name": savedChildName.trim(),
-          if (resolvedRole == 'doctor' && (resolvedPatientId != null && resolvedPatientId.trim().isNotEmpty))
-            "patient_id": resolvedPatientId.trim(),
+          "user_name": resolvedUserName,
+          "user_role": arabicRole,
+          "chat_history": chatHistory,
+          "context": dynamicContext,
         });
       }
 
