@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -44,6 +43,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
       arguments: {'role': role},
     );
   }
+
   @override
   Widget build(BuildContext context) {
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
@@ -55,115 +55,121 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.primary),
+          icon:
+              Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.primary),
           onPressed: () => Navigator.pop(context),
         ),
       ),
       body: SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Floating Robot Mascot
-                    AnimatedBuilder(
-                      animation: _animation,
-                      builder: (context, child) {
-                        return Transform.translate(
-                          offset: Offset(0, _animation.value),
-                          child: child,
-                        );
-                      },
-                      child: Container(
-                        width: 160,
-                        height: 160,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: ClipOval(
-                          child: Padding(
-                            padding: EdgeInsets.all(24.0),
-                            child: Image.asset(
-                              'assets/images/ai_avatar.png', // Robot image
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  Icon(Icons.smart_toy, size: 80, color: AppColors.primary),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 24),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Floating Robot Mascot
+                AnimatedBuilder(
+                  animation: _animation,
+                  builder: (context, child) {
+                    return Transform.translate(
+                      offset: Offset(0, _animation.value),
+                      child: child,
+                    );
+                  },
+                  child: Image.asset(
+                    'assets/images/app_logo.png', // App logo
+                    width: 300,
+                    height: 300,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) => const Icon(
+                        Icons.smart_toy,
+                        size: 100,
+                        color: AppColors.primary),
+                  ),
+                ),
 
-                    // LUMO Branding
-                    Text(
+                // Pull the text up to offset the transparent padding in the PNG
+                Transform.translate(
+                  offset: const Offset(0, -32),
+                  child: ShaderMask(
+                    shaderCallback: (bounds) => LinearGradient(
+                      colors: [
+                        AppColors.primary,
+                        Colors.blueAccent.shade100,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ).createShader(bounds),
+                    child: Text(
                       'LUMO',
-                      style: GoogleFonts.poppins(
-                        fontSize: 32,
+                      style: GoogleFonts.baloo2(
+                        fontSize: 52,
                         fontWeight: FontWeight.w900,
                         letterSpacing: 4.0,
-                        color: AppColors.primary,
+                        color: Colors.white,
+                        shadows: [
+                          const Shadow(
+                            color: Colors.black26,
+                            offset: Offset(0, 4),
+                            blurRadius: 8,
+                          ),
+                        ],
                       ),
                     ),
-                    SizedBox(height: 24),
-
-                    // Main Title
-                    Text(
-                      (isAr ? 'ابدأ رحلة دعم طفلك 🤍' : 'Start your child\'s support journey 🤍'),
-                      style: GoogleFonts.cairo(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: theme.textTheme.titleLarge?.color ?? Colors.black87,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    SizedBox(height: 8),
-
-                    // Sub-title
-                    Text(
-                      (isAr ? 'تحليل ذكي • متابعة دقيقة • تعاون مع الأطباء' : 'Intelligent analysis • Careful follow-up • Collaborate with doctors'),
-                      style: GoogleFonts.cairo(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: theme.textTheme.bodyMedium?.color ?? Colors.grey.shade600,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    SizedBox(height: 48),
-
-                    // Role Cards
-                    _RoleCard(
-                      title: (isAr ? 'أنا أحد الوالدين' : '- I am a parent.'),
-                      subtitle: (isAr ? 'متابعة نمو طفلك والحصول على استشارات' : 'Monitor your child\'s growth and get counseling'),
-                      icon: Icons.family_restroom,
-                      onTap: () => _navigateToSignup(context, UserRole.parent),
-                    ),
-                    SizedBox(height: 16),
-                    _RoleCard(
-                      title: (isAr ? 'أنا طبيب' : 'I\'m a doctor of medicine.'),
-                      subtitle: (isAr ? 'راقب الحالات وتعاون مع الأهالي' : 'Monitor cases and cooperate with parents'),
-                      icon: Icons.medical_services,
-                      onTap: () => _navigateToSignup(context, UserRole.doctor),
-                    ),
-                    SizedBox(height: 48),
-
-                    // Footer
-                    Text(
-                      (isAr ? 'الشروط والأحكام • سياسة الخصوصية • المساعدة' : 'Terms and Conditions • Privacy Policy • Help'),
-                      style: GoogleFonts.cairo(
-                        fontSize: 12, // slightly bigger than 11 for readability
-                        fontWeight: FontWeight.normal,
-                        color: theme.disabledColor,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+                const SizedBox(height: 8), // Compensate for the translation
+                Text(
+                  (isAr
+                      ? 'ابدأ رحلة دعم طفلك 💙'
+                      : 'Start your child\'s support journey 💙 '),
+                  style: GoogleFonts.cairo(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: theme.textTheme.titleLarge?.color ?? Colors.black87,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 8),
+
+                // Sub-title
+                Text(
+                  (isAr
+                      ? 'تحليل ذكي • متابعة دقيقة • تعاون مع الأطباء'
+                      : 'Intelligent analysis • Careful follow-up • Collaborate with doctors'),
+                  style: GoogleFonts.cairo(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: theme.textTheme.bodyMedium?.color ??
+                        Colors.grey.shade600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 48),
+
+                // Role Cards
+                _RoleCard(
+                  title: (isAr ? 'أنا أحد الوالدين' : '- I am a parent.'),
+                  subtitle: (isAr
+                      ? 'متابعة نمو طفلك والحصول على استشارات'
+                      : 'Monitor your child\'s growth and get counseling'),
+                  icon: Icons.family_restroom,
+                  onTap: () => _navigateToSignup(context, UserRole.parent),
+                ),
+                SizedBox(height: 16),
+                _RoleCard(
+                  title: (isAr ? 'أنا طبيب' : 'I\'m a doctor of medicine.'),
+                  subtitle: (isAr
+                      ? 'راقب الحالات وتعاون مع الأهالي'
+                      : 'Monitor cases and cooperate with parents'),
+                  icon: Icons.medical_services,
+                  onTap: () => _navigateToSignup(context, UserRole.doctor),
+                ),
+              ],
             ),
           ),
+        ),
+      ),
     );
   }
 }
@@ -248,7 +254,8 @@ class _RoleCardState extends State<_RoleCard> {
                     Text(
                       widget.subtitle,
                       style: AppTextStyles.caption.copyWith(
-                        color: theme.textTheme.bodyMedium?.color ?? Colors.grey.shade600,
+                        color: theme.textTheme.bodyMedium?.color ??
+                            Colors.grey.shade600,
                       ),
                     ),
                   ],

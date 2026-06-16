@@ -475,11 +475,15 @@ class _PatientSearchDialogState extends State<_PatientSearchDialog> {
                       ? IconButton(
                           icon: const Icon(Icons.clear_rounded),
                           onPressed: () {
+                            if (_debounce?.isActive ?? false) {
+                              _debounce!.cancel();
+                            }
                             _controller.clear();
                             if (mounted) {
                               setState(() {
                                 _results = [];
                                 _isLoading = false;
+                                _error = null;
                               });
                             }
                           },

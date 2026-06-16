@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -71,13 +72,21 @@ class AIMessageBubble extends StatelessWidget {
                     ),
                     child: message.hasError
                         ? _buildErrorMessage()
-                        : Text(
-                            message.content,
-                            style: AppTextStyles.body.copyWith(
-                              height: 1.5, // Better readability
-                              color: isUser
-                                  ? const Color(0xFF1F2937) // Navy/Dark Gray
-                                  : Colors.white,
+                        : MarkdownBody(
+                            data: message.content,
+                            selectable: true,
+                            styleSheet: MarkdownStyleSheet(
+                              p: AppTextStyles.body.copyWith(
+                                height: 1.5,
+                                color: isUser ? const Color(0xFF1F2937) : Colors.white,
+                              ),
+                              strong: AppTextStyles.body.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: isUser ? const Color(0xFF1F2937) : Colors.white,
+                              ),
+                              listBullet: TextStyle(
+                                color: isUser ? const Color(0xFF1F2937) : Colors.white,
+                              ),
                             ),
                           ),
                   ),

@@ -104,7 +104,9 @@ class _SignupScreenState extends State<SignupScreen> with FormValidationMixin {
     if (_selectedRole.isParent && _childImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text((isAr ? 'الرجاء إرفاق صورة الطفل (إجباري)' : 'Please attach a photo of the child (mandatory)')),
+          content: Text((isAr
+              ? 'الرجاء إرفاق صورة الطفل (إجباري)'
+              : 'Please attach a photo of the child (mandatory)')),
           backgroundColor: AppColors.destructive,
         ),
       );
@@ -182,7 +184,8 @@ class _SignupScreenState extends State<SignupScreen> with FormValidationMixin {
         );
       } else {
         if (!mounted) return;
-        _showErrorSnackBar(authProvider.errorMessage ?? (isAr ? 'فشل إنشاء الحساب' : 'Signup failed'));
+        _showErrorSnackBar(authProvider.errorMessage ??
+            (isAr ? 'فشل إنشاء الحساب' : 'Signup failed'));
       }
     } catch (e) {
       if (!mounted) return;
@@ -234,7 +237,11 @@ class _SignupScreenState extends State<SignupScreen> with FormValidationMixin {
                 SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    imageFile != null ? (isAr ? 'تم رفع الصورة بنجاح' : 'Image is uploaded success') : hint,
+                    imageFile != null
+                        ? (isAr
+                            ? 'تم رفع الصورة بنجاح'
+                            : 'Image is uploaded success')
+                        : hint,
                     style: AppTextStyles.body.copyWith(
                       color: imageFile != null
                           ? Theme.of(context).textTheme.bodyLarge?.color
@@ -295,33 +302,11 @@ class _SignupScreenState extends State<SignupScreen> with FormValidationMixin {
                 Center(
                   child: Hero(
                     tag: 'app_logo',
-                    child: Container(
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).cardColor,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Theme.of(context).dividerColor,
-                          width: 1,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color:
-                                Theme.of(context).brightness == Brightness.light
-                                    ? AppColors.primary.withValues(alpha: 0.15)
-                                    : Colors.black.withValues(alpha: 0.3),
-                            blurRadius: 20,
-                            offset: Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      child: ClipOval(
-                        child: Image.asset(
-                          'assets/images/lumo-logo.png',
-                          fit: BoxFit.cover,
-                        ),
-                      ),
+                    child: Image.asset(
+                      'assets/images/app_logo.png',
+                      width: 300,
+                      height: 300,
+                      fit: BoxFit.contain,
                     ),
                   ),
                 ),
@@ -357,7 +342,9 @@ class _SignupScreenState extends State<SignupScreen> with FormValidationMixin {
                   imageFile: _userImage,
                   onTap: () => _pickImage(isChild: false),
                   label: (isAr ? 'الصورة الشخصية' : 'Personal photo'),
-                  hint: (isAr ? 'أضف صورتك الشخصية (اختياري)' : 'Add your profile photo (optional)'),
+                  hint: (isAr
+                      ? 'أضف صورتك الشخصية (اختياري)'
+                      : 'Add your profile photo (optional)'),
                   prefixIcon: _selectedRole.isDoctor
                       ? Icons.medical_services_outlined
                       : Icons.person_outline,
@@ -374,8 +361,8 @@ class _SignupScreenState extends State<SignupScreen> with FormValidationMixin {
                 SizedBox(height: 20),
                 AppTextField(
                   controller: _phoneController,
-                  label: (isAr ? 'رقم الجوال' : 'Mobile No.'),
-                  hint: (isAr ? 'أدخل رقم الجوال' : 'Enter your Mobile'),
+                  label: (isAr ? 'رقم الهاتف' : 'Mobile No.'),
+                  hint: (isAr ? 'أدخل رقم الهاتف' : 'Enter your Mobile'),
                   prefixIcon: Icons.phone_android_outlined,
                   keyboardType: TextInputType.phone,
                   validator: validatePhone,
@@ -422,7 +409,9 @@ class _SignupScreenState extends State<SignupScreen> with FormValidationMixin {
                     imageFile: _childImage,
                     onTap: () => _pickImage(isChild: true),
                     label: (isAr ? 'صورة الطفل' : 'the child picture'),
-                    hint: (isAr ? 'أضف صورة الطفل (إجباري)' : 'Add child\'s photo (mandatory)'),
+                    hint: (isAr
+                        ? 'أضف صورة الطفل (إجباري)'
+                        : 'Add child\'s photo (mandatory)'),
                     prefixIcon: Icons.child_care_outlined,
                   ),
                   SizedBox(height: 20),
@@ -440,7 +429,9 @@ class _SignupScreenState extends State<SignupScreen> with FormValidationMixin {
                   SizedBox(height: 20),
                   AppTextField(
                     controller: _licenseNumberController,
-                    label: (isAr ? 'رقم الطبيب / الترخيص' : 'Doctor Number/ License'),
+                    label: (isAr
+                        ? 'رقم الطبيب / الترخيص'
+                        : 'Doctor Number/ License'),
                     hint: (isAr ? 'أدخل رقم الطبيب' : 'Enter Doctor Number'),
                     prefixIcon: Icons.credit_card_outlined,
                     keyboardType: TextInputType.number,
@@ -450,9 +441,14 @@ class _SignupScreenState extends State<SignupScreen> with FormValidationMixin {
                   AppTextField(
                     controller: _clinicLocationController,
                     label: (isAr ? 'موقع العيادة' : 'Practice location'),
-                    hint: (isAr ? 'أدخل موقع العيادة' : 'Enter clinic location'),
+                    hint:
+                        (isAr ? 'أدخل موقع العيادة' : 'Enter clinic location'),
                     prefixIcon: Icons.location_on_outlined,
-                    validator: (value) => value == null || value.isEmpty ? (isAr ? 'يرجى إدخال موقع العيادة' : 'Please enter clinic location') : null,
+                    validator: (value) => value == null || value.isEmpty
+                        ? (isAr
+                            ? 'يرجى إدخال موقع العيادة'
+                            : 'Please enter clinic location')
+                        : null,
                   ),
                 ],
 

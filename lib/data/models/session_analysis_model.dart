@@ -309,18 +309,41 @@ class SessionAnalysisModel {
     double finalFocusPct = 0.0;
     double finalNotFocusPct = 0.0;
 
-    if (avgFocus != null) {
+    // Helper: calculate focus from gaze data (CENTER = focused)
+    double? gazeFocus() {
+      if (gazeMap.isEmpty) return null;
+      final centerPct = gazeMap['CENTER'] ?? 0.0;
+      final totalGaze = gazeMap.values.fold(0.0, (a, b) => a + b);
+      if (totalGaze <= 0) return null;
+      return centerPct / totalGaze;
+    }
+
+    debugPrint('🔍 [FOCUS CALC] avgFocus: $avgFocus, segmentFocusCount: $segmentFocusCount, gazeMap: $gazeMap');
+
+    if (avgFocus != null && avgFocus > 0) {
+      // Backend provided a non-zero average_focus — trust it
       finalFocusPct = avgFocus > 1.0 ? avgFocus / 100.0 : avgFocus;
       finalNotFocusPct = 1.0 - finalFocusPct;
+      debugPrint('🔍 [FOCUS CALC] Using avgFocus > 0: $finalFocusPct');
     } else if (segmentFocusCount > 0) {
       final avg = segmentFocusPctSum / segmentFocusCount;
       finalFocusPct = avg > 1.0 ? avg / 100.0 : avg;
       finalNotFocusPct = 1.0 - finalFocusPct;
+      debugPrint('🔍 [FOCUS CALC] Using segment avg: $finalFocusPct');
     } else {
-      final centerPct = gazeMap['CENTER'] ?? 0.0;
-      final totalGaze = gazeMap.values.fold(0.0, (a, b) => a + b);
-      finalFocusPct = totalGaze > 0 ? centerPct / totalGaze : 0.0;
-      finalNotFocusPct = 1.0 - finalFocusPct;
+      // Fallback: derive focus from gaze data (CENTER = focused)
+      final gazeDerived = gazeFocus();
+      debugPrint('🔍 [FOCUS CALC] gazeDerived: $gazeDerived');
+      if (gazeDerived != null) {
+        finalFocusPct = gazeDerived;
+        finalNotFocusPct = 1.0 - finalFocusPct;
+        debugPrint('🔍 [FOCUS CALC] Using gazeDerived: $finalFocusPct');
+      } else if (avgFocus != null) {
+        // avgFocus is 0 and no gaze data — use it as-is
+        finalFocusPct = 0.0;
+        finalNotFocusPct = 1.0;
+        debugPrint('🔍 [FOCUS CALC] Using avgFocus=0 fallback: $finalFocusPct');
+      }
     }
 
     // ── Parse summary / recommendations ────────────────────────────────────

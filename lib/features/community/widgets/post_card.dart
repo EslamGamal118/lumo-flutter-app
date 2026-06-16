@@ -45,11 +45,14 @@ class _PostCardState extends State<PostCard> {
 
     final currentUser = authProvider.currentUser;
     final currentUserId = currentUser?.id ?? 0;
-    final isOwner = currentUserId != 0 && post.userId == currentUserId;
+    final isOwner = (currentUserId != 0 && post.userId == currentUserId) || widget.isOwnProfile;
 
     String displayName = post.userName;
     if (isOwner && currentUser != null && currentUser.name.isNotEmpty) {
       displayName = currentUser.name;
+    }
+    if (displayName.trim().isEmpty) {
+      displayName = isOwner ? (l10n.localeName == 'ar' ? 'مستخدم' : 'User') : (l10n.localeName == 'ar' ? 'مستخدم' : 'User');
     }
 
     final String? displayAvatar =

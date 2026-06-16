@@ -129,7 +129,7 @@ class _SessionDetailPlaceholderScreenState
     final notFocusPct = 100 - focusPct;
 
     // Determine dominant gaze direction
-    String dominantGaze = 'المنتصف';
+    String dominantGaze = 'غير متوفر';
     if (_sessionData.gazeDistribution.isNotEmpty) {
       String topKey = '';
       double topVal = -1;
@@ -139,24 +139,27 @@ class _SessionDetailPlaceholderScreenState
           topKey = key;
         }
       });
-      switch (topKey.toUpperCase()) {
-        case 'CENTER':
-          dominantGaze = 'المنتصف';
-          break;
-        case 'UP':
-          dominantGaze = 'أعلى';
-          break;
-        case 'DOWN':
-          dominantGaze = 'أسفل';
-          break;
-        case 'LEFT':
-          dominantGaze = 'يسار';
-          break;
-        case 'RIGHT':
-          dominantGaze = 'يمين';
-          break;
-        default:
-          dominantGaze = topKey;
+      
+      if (topVal > 0) {
+        switch (topKey.toUpperCase()) {
+          case 'CENTER':
+            dominantGaze = 'المنتصف';
+            break;
+          case 'UP':
+            dominantGaze = 'أعلى';
+            break;
+          case 'DOWN':
+            dominantGaze = 'أسفل';
+            break;
+          case 'LEFT':
+            dominantGaze = 'يسار';
+            break;
+          case 'RIGHT':
+            dominantGaze = 'يمين';
+            break;
+          default:
+            dominantGaze = topKey;
+        }
       }
     }
 

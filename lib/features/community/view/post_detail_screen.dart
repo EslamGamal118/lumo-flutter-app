@@ -390,7 +390,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                 itemCount: viewModel.comments.length,
                                 itemBuilder: (context, index) {
                                   final comment = viewModel.comments[index];
-                                  final isLiked = comment.likedByUserIds.contains(currentUserId);
+                                  final isLiked = comment.isLikedBy(currentUserId);
                                   final isReply = comment.isReply;
 
                                   return Padding(

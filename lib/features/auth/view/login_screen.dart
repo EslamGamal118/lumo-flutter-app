@@ -111,33 +111,11 @@ class _LoginScreenState extends State<LoginScreen> with FormValidationMixin {
                 Center(
                   child: Hero(
                     tag: 'app_logo',
-                    child: Container(
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).cardColor,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Theme.of(context).dividerColor,
-                          width: 1,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color:
-                                Theme.of(context).brightness == Brightness.light
-                                    ? AppColors.primary.withValues(alpha: 0.15)
-                                    : Colors.black.withValues(alpha: 0.3),
-                            blurRadius: 20,
-                            offset: Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      child: ClipOval(
-                        child: Image.asset(
-                          'assets/images/lumo-logo.png',
-                          fit: BoxFit.cover,
-                        ),
-                      ),
+                    child: Image.asset(
+                      'assets/images/app_logo.png',
+                      width: 300,
+                      height: 300,
+                      fit: BoxFit.contain,
                     ),
                   ),
                 ),

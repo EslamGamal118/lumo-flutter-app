@@ -253,7 +253,17 @@ class LocalStorageService {
   // ==================== CLEAR ALL ====================
 
   Future<void> clearAll() async {
+    // Preserve essential app state that shouldn't be cleared on logout
+    final onboardingCompleted = _prefs.getBool('onboarding_completed') ?? false;
+    final themeMode = _prefs.getString('theme_mode');
+    final language = _prefs.getString('language_code');
+
     await _prefs.clear();
+
+    // Restore preserved state
+    await _prefs.setBool('onboarding_completed', onboardingCompleted);
+    if (themeMode != null) await _prefs.setString('theme_mode', themeMode);
+    if (language != null) await _prefs.setString('language_code', language);
   }
 
   // ==================== GENERIC METHODS ====================

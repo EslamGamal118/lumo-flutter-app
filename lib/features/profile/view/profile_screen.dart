@@ -438,8 +438,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
+                        var post = displayPosts[index];
+                        
+                        // Inject user info if the backend excluded it (common in myPosts endpoints)
+                        if (post.userName.trim().isEmpty && user != null) {
+                          post = post.copyWith(
+                            userName: user.name,
+                            userAvatarUrl: user.avatarUrl,
+                            userRole: user.role,
+                          );
+                        }
+
                         return PostCard(
-                          post: displayPosts[index],
+                          post: post,
                           isOwnProfile: isMyProfile,
                           hideFollowButton: true,
                         );

@@ -475,9 +475,22 @@ class CommunityViewModel extends ChangeNotifier {
     
     // Optimistic Update
     final newLikesCount = isLiked ? comment.likesCount - 1 : comment.likesCount + 1;
+    
+    final newLikedByUserIds = List<int>.from(comment.likedByUserIds);
+    if (currentUserId != null) {
+      if (isLiked) {
+        newLikedByUserIds.remove(currentUserId);
+      } else {
+        if (!newLikedByUserIds.contains(currentUserId)) {
+          newLikedByUserIds.add(currentUserId);
+        }
+      }
+    }
+
     final updatedComment = comment.copyWith(
       isLiked: !isLiked,
       likesCount: newLikesCount >= 0 ? newLikesCount : 0,
+      likedByUserIds: newLikedByUserIds,
     );
     
     _comments[index] = updatedComment;

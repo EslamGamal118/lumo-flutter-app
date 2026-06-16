@@ -41,6 +41,12 @@ class _ParentAnalysisScreenState extends State<ParentAnalysisScreen> {
     }
   }
 
+  String _resolveImageUrl(String url) {
+    if (url.startsWith('http')) return url;
+    if (!url.startsWith('/')) url = '/$url';
+    return 'https://app2.clickexpress.delivery$url';
+  }
+
   String _formatSessionDate(SessionAnalysisModel session) {
     final dateToFormat = session.date ?? session.startedAt;
     if (dateToFormat == null || dateToFormat.isEmpty) return 'تاريخ غير معروف';
@@ -92,7 +98,7 @@ class _ParentAnalysisScreenState extends State<ParentAnalysisScreen> {
                       border: Border.all(color: Colors.white, width: 2),
                       image: hasImage
                           ? DecorationImage(
-                              image: NetworkImage(parent.childPhotoUrl!),
+                              image: NetworkImage(_resolveImageUrl(parent.childPhotoUrl!)),
                               fit: BoxFit.cover,
                             )
                           : null,
@@ -162,7 +168,7 @@ class _ParentAnalysisScreenState extends State<ParentAnalysisScreen> {
                         border: Border.all(color: Colors.white, width: 2),
                         image: hasDoctorImage
                             ? DecorationImage(
-                                image: NetworkImage(doctor.avatarUrl!),
+                                image: NetworkImage(_resolveImageUrl(doctor.avatarUrl!)),
                                 fit: BoxFit.cover,
                               )
                             : null,
@@ -595,7 +601,12 @@ class _ParentAnalysisScreenState extends State<ParentAnalysisScreen> {
                               ),
                             ),
                           ),
-                          onTap: () {
+                          onTap: () async {
+                            final sessionId = int.tryParse(session.id);
+                            if (sessionId != null) {
+                              await viewModel.loadSessionDetails(sessionId);
+                            }
+                            if (!context.mounted) return;
                             Navigator.push(
                               context,
                               MaterialPageRoute(
