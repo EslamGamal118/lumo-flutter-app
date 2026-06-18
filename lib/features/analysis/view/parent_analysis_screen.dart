@@ -383,8 +383,9 @@ class _ParentAnalysisScreenState extends State<ParentAnalysisScreen> {
                   interval: 1,
                   getTitlesWidget: (value, meta) {
                     final idx = value.toInt() - 1;
-                    if (idx < 0 || idx >= chartSessions.length)
+                    if (idx < 0 || idx >= chartSessions.length) {
                       return const SizedBox.shrink();
+                    }
                     final session = chartSessions[idx];
                     final globalIndex = allSessions.indexOf(session);
                     final displayIndex = allSessions.length - globalIndex;

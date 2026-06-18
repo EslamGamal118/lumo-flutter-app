@@ -25,7 +25,6 @@ class _ChatbotScreenState extends State<ChatbotScreen>
 
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
-  late Animation<double> _glowAnimation;
 
   // Staggered animations for chips
   late List<Animation<double>> _chipAnimations;
@@ -52,9 +51,6 @@ class _ChatbotScreenState extends State<ChatbotScreen>
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOutSine),
     );
 
-    _glowAnimation = Tween<double>(begin: 0.2, end: 0.6).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOutSine),
-    );
 
     _entryController = AnimationController(
       vsync: this,
