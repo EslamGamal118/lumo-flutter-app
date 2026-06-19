@@ -13,6 +13,7 @@ class AvatarWidget extends StatelessWidget {
   final bool showOnlineIndicator;
   final bool isOnline;
   final IconData? fallbackIcon;
+  final Color? borderColor;
 
   const AvatarWidget({
     super.key,
@@ -24,6 +25,7 @@ class AvatarWidget extends StatelessWidget {
     this.showOnlineIndicator = false,
     this.isOnline = false,
     this.fallbackIcon,
+    this.borderColor,
   });
 
   @override
@@ -41,7 +43,9 @@ class AvatarWidget extends StatelessWidget {
               shape: BoxShape.circle,
               color: theme.cardColor,
               border: Border.all(
-                  color: theme.dividerColor.withValues(alpha: 0.5)),
+                  color: borderColor ?? theme.dividerColor.withValues(alpha: 0.5),
+                  width: borderColor != null ? 2 : 1,
+              ),
             ),
             clipBehavior: Clip.antiAlias,
             child: _buildAvatarBody(context),
@@ -115,6 +119,21 @@ class AvatarWidget extends StatelessWidget {
   }
 
   Widget _buildPlaceholder(BuildContext context) {
+    if (name != null && name!.trim().isNotEmpty) {
+      // Using DiceBear 'fun-emoji' API with forced smiling/respectful mouths
+      final defaultAvatarUrl =
+          'https://api.dicebear.com/8.x/fun-emoji/png?seed=${Uri.encodeComponent(name!)}&mouths=smile,wideSmile,cute,kissHeart';
+      return CachedNetworkImage(
+        imageUrl: defaultAvatarUrl,
+        fit: BoxFit.cover,
+        placeholder: (context, url) => _buildIconPlaceholder(context),
+        errorWidget: (context, url, error) => _buildIconPlaceholder(context),
+      );
+    }
+    return _buildIconPlaceholder(context);
+  }
+
+  Widget _buildIconPlaceholder(BuildContext context) {
     return Center(
       child: Icon(
         fallbackIcon ?? Icons.person_rounded,

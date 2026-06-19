@@ -5,9 +5,11 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/models/parent_model.dart';
 import '../../../data/models/session_analysis_model.dart';
-import '../../../shared/providers/auth_provider.dart';
+import '../../../shared/widgets/avatar_widget.dart';
+import '../view_model/analysis_view_model.dart';
 import '../../../shared/providers/patient_provider.dart';
 
+import '../../../shared/providers/auth_provider.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../session/view_model/session_view_model.dart';
 import 'session_detail_placeholder_screen.dart';
@@ -95,26 +97,12 @@ class _ParentAnalysisScreenState extends State<ParentAnalysisScreen> {
             Expanded(
               child: Row(
                 children: [
-                  Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
-                      image: hasImage
-                          ? DecorationImage(
-                              image: NetworkImage(
-                                  _resolveImageUrl(parent.avatarUrl!)),
-                              fit: BoxFit.cover,
-                            )
-                          : null,
-                      color:
-                          hasImage ? null : Colors.white.withValues(alpha: 0.2),
-                    ),
-                    child: hasImage
-                        ? null
-                        : const Icon(Icons.face_retouching_natural_rounded,
-                            color: Colors.white, size: 30),
+                  AvatarWidget(
+                    imageUrl: hasImage ? _resolveImageUrl(parent.avatarUrl!) : null,
+                    name: parent.childName.isNotEmpty ? parent.childName : parent.name,
+                    size: 60,
+                    borderColor: Colors.white,
+                    fallbackIcon: Icons.face_retouching_natural_rounded,
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -170,27 +158,12 @@ class _ParentAnalysisScreenState extends State<ParentAnalysisScreen> {
               Expanded(
                 child: Row(
                   children: [
-                    Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
-                        image: hasDoctorImage
-                            ? DecorationImage(
-                                image: NetworkImage(
-                                    _resolveImageUrl(doctor.avatarUrl!)),
-                                fit: BoxFit.cover,
-                              )
-                            : null,
-                        color: hasDoctorImage
-                            ? null
-                            : Colors.white.withValues(alpha: 0.2),
-                      ),
-                      child: hasDoctorImage
-                          ? null
-                          : const Icon(Icons.medical_services_rounded,
-                              color: Colors.white, size: 30),
+                    AvatarWidget(
+                      imageUrl: hasDoctorImage ? _resolveImageUrl(doctor.avatarUrl!) : null,
+                      name: doctor.name,
+                      size: 60,
+                      borderColor: Colors.white,
+                      fallbackIcon: Icons.medical_services_rounded,
                     ),
                     const SizedBox(width: 12),
                     Expanded(

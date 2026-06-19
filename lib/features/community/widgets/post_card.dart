@@ -94,6 +94,7 @@ class _PostCardState extends State<PostCard> {
                     AvatarWidget(
                       size: 40,
                       imageUrl: displayAvatar,
+                      name: displayName,
                       onTap: () => _navigateToProfile(context, post),
                     ),
                     const SizedBox(width: 12),

@@ -415,7 +415,7 @@ class _ChatsListScreenState extends State<ChatsListScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                    (isAr ? 'فشل بدء المحادثة، راجع الـ Console لمعرفة الخطأ' : 'Failed to start conversation, check with Console for error')),
+                    (isAr ? 'عذراً، حدث خطأ أثناء بدء المحادثة. يرجى المحاولة لاحقاً.' : 'Sorry, an error occurred while starting the conversation. Please try again later.')),
                 backgroundColor: Colors.red,
                 behavior: SnackBarBehavior.floating,
               ),
@@ -761,7 +761,7 @@ class _ChatsListScreenState extends State<ChatsListScreen> {
                                         .showSnackBar(
                                       SnackBar(
                                         content: Text(
-                                            (isAr ? 'فشل بدء المحادثة، راجع الـ Console لمعرفة الخطأ' : 'Failed to start conversation, check with Console for error')),
+                                            (isAr ? 'عذراً، حدث خطأ أثناء بدء المحادثة. يرجى المحاولة لاحقاً.' : 'Sorry, an error occurred while starting the conversation. Please try again later.')),
                                         backgroundColor: Colors.red,
                                         behavior: SnackBarBehavior.floating,
                                       ),
