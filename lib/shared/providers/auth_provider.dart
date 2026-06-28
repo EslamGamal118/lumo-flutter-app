@@ -244,6 +244,7 @@ class AuthProvider extends ChangeNotifier {
     required String password,
     VoidCallback? onSuccess,
   }) async {
+    if (_isLoading) return false;
     _setLoading(true);
     _errorMessage = null;
 
@@ -307,6 +308,7 @@ class AuthProvider extends ChangeNotifier {
     String? childImageUrl,
     VoidCallback? onSuccess,
   }) async {
+    if (_isLoading) return false;
     _setLoading(true);
     _errorMessage = null;
 

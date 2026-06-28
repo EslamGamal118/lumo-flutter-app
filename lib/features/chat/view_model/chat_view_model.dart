@@ -302,9 +302,13 @@ class ChatViewModel extends ChangeNotifier {
         if (newMessages.isNotEmpty) {
           _messages.addAll(newMessages);
           _messages.sort((a, b) => a.timestamp.compareTo(b.timestamp));
-          _safeNotifyListeners();
         }
       }
+      _isLoading = false;
+      _safeNotifyListeners();
+    }).catchError((e) {
+      _isLoading = false;
+      _safeNotifyListeners();
     });
 
     try {

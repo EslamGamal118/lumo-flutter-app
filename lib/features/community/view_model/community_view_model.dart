@@ -24,10 +24,12 @@ class CommunityViewModel extends ChangeNotifier {
     super.dispose();
   }
 
-  List<PostModel> _posts = [];
-  List<PostModel> _explorePosts = [];
-  List<PostModel> _followingPosts = [];
-  List<PostModel> _myPosts = [];
+  final Map<int, PostModel> _postsMap = {};
+  List<int> _homePostIds = [];
+  List<int> _explorePostIds = [];
+  List<int> _followingPostIds = [];
+  List<int> _myPostIds = [];
+  final Set<int> _togglingLikeIds = {};
   List<CommentModel> _comments = [];
   List<UserModel> _searchResults = [];
   List<int> _followedUserIds = [];
@@ -44,10 +46,10 @@ class CommunityViewModel extends ChangeNotifier {
   CommentModel? _replyingToComment;
   int? _currentUserId;
 
-  List<PostModel> get posts => _posts;
-  List<PostModel> get explorePosts => _explorePosts;
-  List<PostModel> get followingPosts => _followingPosts;
-  List<PostModel> get myPosts => _myPosts;
+  List<PostModel> get posts => _homePostIds.map((id) => _postsMap[id]).whereType<PostModel>().toList();
+  List<PostModel> get explorePosts => _explorePostIds.map((id) => _postsMap[id]).whereType<PostModel>().toList();
+  List<PostModel> get followingPosts => _followingPostIds.map((id) => _postsMap[id]).whereType<PostModel>().toList();
+  List<PostModel> get myPosts => _myPostIds.map((id) => _postsMap[id]).whereType<PostModel>().toList();
   List<CommentModel> get comments => _comments;
   List<UserModel> get searchResults => _searchResults;
   List<UserModel> get followingUsers => _followingUsers;
@@ -66,10 +68,12 @@ class CommunityViewModel extends ChangeNotifier {
   int get followingCount => _followedUserIds.length;
 
   void resetState() {
-    _posts = [];
-    _explorePosts = [];
-    _followingPosts = [];
-    _myPosts = [];
+    _postsMap.clear();
+    _homePostIds = [];
+    _explorePostIds = [];
+    _followingPostIds = [];
+    _myPostIds = [];
+    _togglingLikeIds.clear();
     _comments = [];
     _searchResults = [];
     _followedUserIds = [];
@@ -85,12 +89,12 @@ class CommunityViewModel extends ChangeNotifier {
     _safeNotify();
   }
 
-  PostModel? findPostById(int id) {
-    for (var list in [_explorePosts, _posts, _followingPosts, _myPosts]) {
-      final index = list.indexWhere((p) => p.id == id);
-      if (index != -1) return list[index];
+  PostModel? findPostById(int id) => _postsMap[id];
+  
+  void _addPostsToMap(List<PostModel> newPosts) {
+    for (var p in newPosts) {
+      _postsMap[p.id] = p;
     }
-    return null;
   }
 
   Future<void> fetchPostById(int postId) async {
@@ -113,17 +117,18 @@ class CommunityViewModel extends ChangeNotifier {
     if (userId != null && userId != _currentUserId) {
       _currentUserId = userId;
       _isInitialized = false;
-      _posts = [];
-      _explorePosts = [];
-      _followingPosts = [];
-      _myPosts = [];
+      _postsMap.clear();
+      _homePostIds = [];
+      _explorePostIds = [];
+      _followingPostIds = [];
+      _myPostIds = [];
       _followedUserIds = [];
       force = true;
     } else if (userId != null) {
       _currentUserId = userId;
     }
 
-    if (_isInitialized && !force && _posts.isNotEmpty) {
+    if (_isInitialized && !force && _homePostIds.isNotEmpty) {
       _loadAllFeeds(rethrowError: false);
       return;
     }
@@ -188,50 +193,51 @@ class CommunityViewModel extends ChangeNotifier {
 
   Future<void> _loadHomeFeedInternal({int page = 1}) async {
     final feed = await _repository.getHomeFeed(page: page);
+    _addPostsToMap(feed);
     if (page == 1) {
-      final List<PostModel> merged = [...feed];
-      for (var myPost in _myPosts) {
-        if (!merged.any((p) => p.id == myPost.id)) {
-          merged.insert(0, myPost);
+      final List<int> merged = feed.map((p) => p.id).toList();
+      for (var myPostId in _myPostIds) {
+        if (!merged.contains(myPostId)) {
+          merged.insert(0, myPostId);
         }
       }
-      _posts = merged;
+      _homePostIds = merged;
     } else {
-      _posts.addAll(feed);
+      _homePostIds.addAll(feed.map((p) => p.id));
     }
   }
 
   Future<void> _loadExploreFeedInternal({int page = 1}) async {
     final feed = await _repository.getExploreFeed(page: page);
+    _addPostsToMap(feed);
     if (page == 1) {
-      _explorePosts = feed;
-      _posts = feed;
+      _explorePostIds = feed.map((p) => p.id).toList();
+      _homePostIds = List.from(_explorePostIds);
     } else {
-      _explorePosts.addAll(feed);
-      _posts.addAll(feed);
+      _explorePostIds.addAll(feed.map((p) => p.id));
+      _homePostIds.addAll(feed.map((p) => p.id));
     }
   }
 
   Future<void> _loadFollowingFeedInternal({int page = 1}) async {
     final feed = await _repository.getHomeFeed(page: page);
+    _addPostsToMap(feed);
+    final filtered = feed.where((p) => _followedUserIds.contains(p.userId)).map((p) => p.id);
     if (page == 1) {
-      _followingPosts = feed
-          .where((post) => _followedUserIds.contains(post.userId))
-          .toList();
+      _followingPostIds = filtered.toList();
     } else {
-      _followingPosts.addAll(
-        feed.where((post) => _followedUserIds.contains(post.userId)).toList(),
-      );
+      _followingPostIds.addAll(filtered);
     }
     _safeNotify();
   }
 
   Future<void> _loadMyPostsInternal({int page = 1}) async {
     final posts = await _repository.getMyPosts(page: page);
+    _addPostsToMap(posts);
     if (page == 1) {
-      _myPosts = posts;
+      _myPostIds = posts.map((p) => p.id).toList();
     } else {
-      _myPosts.addAll(posts);
+      _myPostIds.addAll(posts.map((p) => p.id));
     }
   }
 
@@ -247,13 +253,12 @@ class CommunityViewModel extends ChangeNotifier {
 
     try {
       await _loadExploreFeedInternal(page: page);
-      _isLoading = false;
-      _safeNotify();
     } catch (e) {
       _errorMessage = 'فشل تحميل الاستكشاف: ${e.toString()}';
+      if (rethrowError) rethrow;
+    } finally {
       _isLoading = false;
       _safeNotify();
-      if (rethrowError) rethrow;
     }
   }
 
@@ -281,13 +286,12 @@ class CommunityViewModel extends ChangeNotifier {
 
     try {
       await _loadHomeFeedInternal(page: page);
-      _isLoading = false;
-      _safeNotify();
     } catch (e) {
       _errorMessage = 'فشل تحميل الخلاصة: ${e.toString()}';
+      if (rethrowError) rethrow;
+    } finally {
       _isLoading = false;
       _safeNotify();
-      if (rethrowError) rethrow;
     }
   }
 
@@ -299,13 +303,12 @@ class CommunityViewModel extends ChangeNotifier {
 
     try {
       await _loadFollowingFeedInternal(page: page);
-      _isLoading = false;
-      _safeNotify();
     } catch (e) {
       _errorMessage = 'فشل تحميل منشورات المتابعة: ${e.toString()}';
+      if (rethrowError) rethrow;
+    } finally {
       _isLoading = false;
       _safeNotify();
-      if (rethrowError) rethrow;
     }
   }
 
@@ -331,13 +334,12 @@ class CommunityViewModel extends ChangeNotifier {
 
     try {
       await _loadMyPostsInternal(page: page);
-      _isLoading = false;
-      _safeNotify();
     } catch (e) {
       _errorMessage = 'فشل تحميل منشوراتي: ${e.toString()}';
+      if (rethrowError) rethrow;
+    } finally {
       _isLoading = false;
       _safeNotify();
-      if (rethrowError) rethrow;
     }
   }
 
@@ -348,6 +350,7 @@ class CommunityViewModel extends ChangeNotifier {
     String? currentUserAvatar,
     int? currentUserId,
   }) async {
+    if (_isLoading) return false;
     _currentUserId = currentUserId;
     _isLoading = true;
     _errorMessage = null;
@@ -384,10 +387,11 @@ class CommunityViewModel extends ChangeNotifier {
         userId: finalId ?? postResponse.userId,
       );
 
-      _posts.insert(0, post);
-      _explorePosts.insert(0, post);
-      _myPosts.insert(0, post);
-      _followingPosts.insert(0, post);
+      _postsMap[post.id] = post;
+      _homePostIds.insert(0, post.id);
+      _explorePostIds.insert(0, post.id);
+      _myPostIds.insert(0, post.id);
+      _followingPostIds.insert(0, post.id);
 
       return true;
     } catch (e) {
@@ -400,17 +404,12 @@ class CommunityViewModel extends ChangeNotifier {
   }
 
   void updateAuthorInfoInPosts(int userId, String name, String? avatarUrl) {
-    void updateList(List<PostModel> list) {
-      for (int i = 0; i < list.length; i++) {
-        if (list[i].userId == userId) {
-          list[i] = list[i].copyWith(userName: name, userAvatarUrl: avatarUrl);
-        }
+    for (var postId in _postsMap.keys.toList()) {
+      final p = _postsMap[postId]!;
+      if (p.userId == userId) {
+        _postsMap[postId] = p.copyWith(userName: name, userAvatarUrl: avatarUrl);
       }
     }
-
-    updateList(_posts);
-    updateList(_followingPosts);
-    updateList(_myPosts);
     _safeNotify();
   }
 
@@ -434,13 +433,15 @@ class CommunityViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> toggleLike(int postId) async {
+  Future<String?> toggleLike(int postId) async {
+    if (_togglingLikeIds.contains(postId)) return null;
     final post = findPostById(postId);
-    if (post == null) return;
+    if (post == null) return null;
 
     final currentUserId = _currentUserId;
-    if (currentUserId == null) return;
+    if (currentUserId == null) return null;
 
+    _togglingLikeIds.add(postId);
     final isLiked = post.isLikedBy(currentUserId);
     
     final updatedLikedByIds = List<int>.from(post.likedByUserIds);
@@ -460,9 +461,23 @@ class CommunityViewModel extends ChangeNotifier {
 
     try {
       await _repository.toggleLike(postId);
+      return null;
     } catch (e) {
       _updatePostEverywhere(post);
-      _errorMessage = 'فشل التفاعل مع المنشور: ${e.toString()}';
+      
+      final errorStr = e.toString().toLowerCase();
+      String errorMsg = 'لم يتم تسجيل الإعجاب، تأكد من الاتصال';
+      if (errorStr.contains('socketexception') ||
+          errorStr.contains('connection') ||
+          errorStr.contains('network') ||
+          errorStr.contains('timeout')) {
+        errorMsg = 'لم يتم تسجيل الإعجاب، تأكد من الاتصال';
+      }
+      _errorMessage = errorMsg;
+      _safeNotify();
+      return errorMsg;
+    } finally {
+      _togglingLikeIds.remove(postId);
       _safeNotify();
     }
   }
@@ -548,29 +563,18 @@ class CommunityViewModel extends ChangeNotifier {
   }
 
   void _updatePostEverywhere(PostModel updatedPost) {
-    void updateList(List<PostModel> list) {
-      final index = list.indexWhere((p) => p.id == updatedPost.id);
-      if (index != -1) {
-        list[index] = updatedPost;
-      }
+    if (_postsMap.containsKey(updatedPost.id)) {
+      _postsMap[updatedPost.id] = updatedPost;
+      _safeNotify();
     }
-
-    updateList(_posts);
-    updateList(_explorePosts);
-    updateList(_followingPosts);
-    updateList(_myPosts);
-    _safeNotify();
   }
 
   void _removePostEverywhere(int postId) {
-    void removeFromList(List<PostModel> list) {
-      list.removeWhere((p) => p.id == postId);
-    }
-
-    removeFromList(_posts);
-    removeFromList(_explorePosts);
-    removeFromList(_followingPosts);
-    removeFromList(_myPosts);
+    _postsMap.remove(postId);
+    _homePostIds.remove(postId);
+    _explorePostIds.remove(postId);
+    _followingPostIds.remove(postId);
+    _myPostIds.remove(postId);
     _safeNotify();
   }
 
@@ -584,7 +588,7 @@ class CommunityViewModel extends ChangeNotifier {
     // 1. Optimistic UI Update
     if (wasFollowing) {
       _followedUserIds.remove(userId);
-      _followingPosts.removeWhere((p) => p.userId == userId);
+      _followingPostIds.removeWhere((id) => _postsMap[id]?.userId == userId);
     } else {
       _followedUserIds.add(userId);
     }

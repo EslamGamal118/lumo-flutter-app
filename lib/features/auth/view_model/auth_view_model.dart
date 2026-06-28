@@ -48,13 +48,13 @@ class AuthViewModel extends ChangeNotifier {
       }
 
       _errorMessage = null;
-      _setLoading(false);
       return true;
     } catch (e) {
       _errorMessage = e.toString();
       debugPrint('Login error: $e');
-      _setLoading(false);
       return false;
+    } finally {
+      _setLoading(false);
     }
   }
 
@@ -97,12 +97,12 @@ class AuthViewModel extends ChangeNotifier {
         _currentUser = response.user;
       }
 
-      _setLoading(false);
       return true;
     } catch (e) {
       _errorMessage = e.toString();
-      _setLoading(false);
       return false;
+    } finally {
+      _setLoading(false);
     }
   }
 

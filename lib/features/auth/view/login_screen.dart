@@ -31,6 +31,7 @@ class _LoginScreenState extends State<LoginScreen> with FormValidationMixin {
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -40,10 +41,13 @@ class _LoginScreenState extends State<LoginScreen> with FormValidationMixin {
   }
 
   Future<void> _handleLogin() async {
-    if (_isLoading) return;
+    if (_isLoading || _isSubmitting) return;
     if (!validateForm()) return;
 
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _isSubmitting = true;
+    });
 
     final authProvider = context.read<AuthProvider>();
     final success = await authProvider.login(
@@ -55,7 +59,10 @@ class _LoginScreenState extends State<LoginScreen> with FormValidationMixin {
     
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
 
-    setState(() => _isLoading = false);
+    setState(() {
+      _isLoading = false;
+      _isSubmitting = false;
+    });
 
     if (success) {
       // ✅ Navigate to Home (MainLayout) — clear entire nav stack

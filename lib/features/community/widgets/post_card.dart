@@ -293,7 +293,18 @@ class _PostCardState extends State<PostCard> {
                       icon: post.isLiked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
                       color: post.isLiked ? Colors.red : theme.colorScheme.onSurface.withValues(alpha: 0.6),
                       label: post.likesCount.toString(),
-                      onTap: () => context.read<CommunityViewModel>().toggleLike(post.id),
+                      onTap: () async {
+                        final error = await context.read<CommunityViewModel>().toggleLike(post.id);
+                        if (error != null && context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(error),
+                              backgroundColor: Colors.red,
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }
+                      },
                     ),
                     _ActionButton(
                       icon: Icons.chat_bubble_outline_rounded,

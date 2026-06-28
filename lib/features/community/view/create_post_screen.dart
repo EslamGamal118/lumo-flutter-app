@@ -19,6 +19,7 @@ class CreatePostScreen extends StatefulWidget {
 class _CreatePostScreenState extends State<CreatePostScreen> {
   late final TextEditingController _contentController;
   File? _selectedImage;
+  bool _isSubmitting = false;
 
   @override
   void initState() {
@@ -43,11 +44,20 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   }
 
   Future<void> _handleSubmit() async {
+    if (_isSubmitting) return;
+    setState(() => _isSubmitting = true);
+    
     final viewModel = context.read<CommunityViewModel>();
-    if (viewModel.isLoading) return;
+    if (viewModel.isLoading) {
+      setState(() => _isSubmitting = false);
+      return;
+    }
 
     final content = _contentController.text.trim();
-    if (content.isEmpty) return;
+    if (content.isEmpty) {
+      setState(() => _isSubmitting = false);
+      return;
+    }
 
     final authProvider = context.read<AuthProvider>();
     final user = authProvider.currentUser;
@@ -61,6 +71,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     );
 
     if (mounted) {
+      setState(() => _isSubmitting = false);
       if (success) {
         Navigator.pop(context, true);
       } else {
@@ -85,7 +96,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       appBar: AppBar(
         title: const Text('إنشاء منشور'),
         actions: [
-          if (viewModel.isLoading)
+          if (viewModel.isLoading || _isSubmitting)
             const Center(
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16),
