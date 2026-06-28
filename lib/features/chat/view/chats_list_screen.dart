@@ -276,22 +276,14 @@ class _ChatsListScreenState extends State<ChatsListScreen> {
   Widget _buildChatRoomTile(BuildContext context, ChatRoomModel room,
       UserModel currentUser, ThemeData theme, List<UserModel> connectedUsers) {
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
-    final otherId = room.getOtherParticipantId(currentUser.id.toString());
     
-    String otherName = room.getOtherParticipantName(currentUser.id.toString());
-    String? otherAvatar = room.getOtherParticipantAvatar(currentUser.id.toString());
-
-    if (otherName == 'مستخدم' || otherName.isEmpty || otherName == 'مستخدم غير معروف') {
-      try {
-        final match = connectedUsers.firstWhere((u) => u.id.toString() == otherId);
-        otherName = match.name;
-        if (otherAvatar == null || otherAvatar.isEmpty) {
-          otherAvatar = match.profileImage ?? match.avatarUrl;
-        }
-      } catch (e) {
-        // No match found
-      }
-    }
+    // إستخدام الـ otherUser المباشر من الـ API زي ما الباك إيند بيبعت
+    final otherUser = room.otherUser;
+    
+    // Fallbacks in case otherUser is null (e.g. from local cache or Firebase)
+    final otherName = otherUser?.name ?? room.getOtherParticipantName(currentUser.id.toString());
+    final otherAvatar = otherUser?.profileImage ?? room.getOtherParticipantAvatar(currentUser.id.toString());
+    final otherId = otherUser?.id.toString() ?? room.getOtherParticipantId(currentUser.id.toString());
 
     return ListTile(
       contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -300,7 +292,7 @@ class _ChatsListScreenState extends State<ChatsListScreen> {
         imageUrl: otherAvatar,
         size: 50,
       ),
-      title: Text(otherName, style: AppTextStyles.label),
+      title: Text(otherName, style: AppTextStyles.label.copyWith(fontWeight: FontWeight.bold)),
       subtitle: Text(
         room.hasLastMessage ? room.lastMessage! : (isAr ? 'إبدأ المحادثة الآن' : 'Start the conversation now'),
         maxLines: 1,
@@ -320,8 +312,8 @@ class _ChatsListScreenState extends State<ChatsListScreen> {
         children: [
           if (room.lastMessageTimestamp != null)
             Text(
-              "${room.lastMessageTimestamp!.hour}:${room.lastMessageTimestamp!.minute.toString().padLeft(2, '0')}",
-              style: AppTextStyles.caption,
+              "${room.lastMessageTimestamp!.hour.toString().padLeft(2, '0')}:${room.lastMessageTimestamp!.minute.toString().padLeft(2, '0')}",
+              style: AppTextStyles.caption.copyWith(color: Colors.grey, fontSize: 12),
             ),
           if (room.getUnreadCount(currentUser.id.toString()) > 0)
             Container(
@@ -347,7 +339,7 @@ class _ChatsListScreenState extends State<ChatsListScreen> {
             builder: (_) => ChangeNotifierProvider.value(
               value: chatViewModel,
               child: ChatRoomScreen(
-                chatRoomId: room.id,
+                chatRoomId: room.id.toString(), // تمرير الـ ID الصريح كنص للـ Firebase Document
                 otherUserName: otherName,
                 otherUserAvatar: otherAvatar,
                 otherUserId: otherId,

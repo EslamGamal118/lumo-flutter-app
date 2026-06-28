@@ -34,6 +34,12 @@ class CommunityViewModel extends ChangeNotifier {
   List<UserModel> _followingUsers = [];
   bool _isLoading = false;
   bool _isInitialized = false;
+  
+  // Pagination State
+  int _explorePage = 1;
+  int _followingPage = 1;
+  bool _isLoadingMore = false;
+  
   String? _errorMessage;
   CommentModel? _replyingToComment;
   int? _currentUserId;
@@ -47,6 +53,7 @@ class CommunityViewModel extends ChangeNotifier {
   List<UserModel> get followingUsers => _followingUsers;
   bool get isLoading => _isLoading;
   bool get isInitialized => _isInitialized;
+  bool get isLoadingMore => _isLoadingMore;
   String? get errorMessage => _errorMessage;
   CommentModel? get replyingToComment => _replyingToComment;
 
@@ -69,6 +76,9 @@ class CommunityViewModel extends ChangeNotifier {
     _followingUsers = [];
     _isLoading = false;
     _isInitialized = false;
+    _explorePage = 1;
+    _followingPage = 1;
+    _isLoadingMore = false;
     _errorMessage = null;
     _replyingToComment = null;
     _currentUserId = null;
@@ -230,6 +240,7 @@ class CommunityViewModel extends ChangeNotifier {
   }
 
   Future<void> loadExploreFeed({int page = 1, bool rethrowError = false}) async {
+    if (page == 1) _explorePage = 1;
     _isLoading = true;
     _errorMessage = null;
     _safeNotify();
@@ -247,6 +258,21 @@ class CommunityViewModel extends ChangeNotifier {
   }
 
   Future<void> fetchExplorePosts() => loadExploreFeed();
+  
+  Future<void> fetchMoreExplore() async {
+    if (_isLoading || _isLoadingMore) return;
+    _isLoadingMore = true;
+    _safeNotify();
+    try {
+      _explorePage++;
+      await _loadExploreFeedInternal(page: _explorePage);
+    } catch (e) {
+      _explorePage--;
+    } finally {
+      _isLoadingMore = false;
+      _safeNotify();
+    }
+  }
 
   Future<void> loadHomeFeed({int page = 1, bool rethrowError = false}) async {
     _isLoading = true;
@@ -266,6 +292,7 @@ class CommunityViewModel extends ChangeNotifier {
   }
 
   Future<void> loadFollowingFeed({int page = 1, bool rethrowError = false}) async {
+    if (page == 1) _followingPage = 1;
     _isLoading = true;
     _errorMessage = null;
     _safeNotify();
@@ -279,6 +306,21 @@ class CommunityViewModel extends ChangeNotifier {
       _isLoading = false;
       _safeNotify();
       if (rethrowError) rethrow;
+    }
+  }
+
+  Future<void> fetchMoreFollowing() async {
+    if (_isLoading || _isLoadingMore) return;
+    _isLoadingMore = true;
+    _safeNotify();
+    try {
+      _followingPage++;
+      await _loadFollowingFeedInternal(page: _followingPage);
+    } catch (e) {
+      _followingPage--;
+    } finally {
+      _isLoadingMore = false;
+      _safeNotify();
     }
   }
 

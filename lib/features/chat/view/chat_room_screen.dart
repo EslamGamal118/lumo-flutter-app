@@ -78,7 +78,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       if (!_scrollController.hasClients) return;
       try {
         _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
+          0.0,
           duration: Duration(milliseconds: 300),
           curve: Curves.easeOut,
         );
@@ -308,24 +308,29 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                   color: messagesBackground,
                   child: ListView.builder(
                     controller: _scrollController,
+                    reverse: true,
                     padding: EdgeInsets.symmetric(vertical: 16),
                     itemCount: itemCount,
                     itemBuilder: (context, index) {
-                      // Show typing indicator as the last item
-                      if (isOtherTyping &&
-                          index == viewModel.messages.length) {
-                        return Padding(
-                          padding: EdgeInsets.only(
-                              left: 24, right: 64, top: 4, bottom: 4),
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: TypingIndicator(
-                              dotColor: Theme.of(context).colorScheme.primary,
+                      // Show typing indicator as the first item when reversed
+                      if (isOtherTyping) {
+                        if (index == 0) {
+                          return Padding(
+                            padding: EdgeInsets.only(
+                                left: 24, right: 64, top: 4, bottom: 4),
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: TypingIndicator(
+                                dotColor: Theme.of(context).colorScheme.primary,
+                              ),
                             ),
-                          ),
-                        );
+                          );
+                        }
+                        index -= 1;
                       }
-                      final message = viewModel.messages[index];
+                      
+                      final messageIndex = viewModel.messages.length - 1 - index;
+                      final message = viewModel.messages[messageIndex];
                       final isMe = message.senderId.toString() == currentUserId;
                       return MessageBubble(message: message, isMe: isMe);
                     },

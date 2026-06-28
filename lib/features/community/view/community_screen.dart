@@ -99,21 +99,53 @@ class _CommunityScreenState extends State<CommunityScreen> with SingleTickerProv
   }
 }
 
-class _CommunityFeedWrapper extends StatelessWidget {
+class _CommunityFeedWrapper extends StatefulWidget {
   final bool isExplore;
   const _CommunityFeedWrapper({required this.isExplore});
+
+  @override
+  State<_CommunityFeedWrapper> createState() => _CommunityFeedWrapperState();
+}
+
+class _CommunityFeedWrapperState extends State<_CommunityFeedWrapper> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      final viewModel = context.read<CommunityViewModel>();
+      if (widget.isExplore) {
+        viewModel.fetchMoreExplore();
+      } else {
+        viewModel.fetchMoreFollowing();
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
       onRefresh: () async {
-        if (isExplore) {
+        if (widget.isExplore) {
           await context.read<CommunityViewModel>().loadExploreFeed();
         } else {
           await context.read<CommunityViewModel>().loadFollowingFeed();
         }
       },
       child: CustomScrollView(
+        controller: _scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
           const SliverToBoxAdapter(
@@ -121,7 +153,7 @@ class _CommunityFeedWrapper extends StatelessWidget {
           ),
           Consumer<CommunityViewModel>(
             builder: (context, viewModel, child) {
-              final posts = isExplore ? viewModel.explorePosts : viewModel.followingPosts;
+              final posts = widget.isExplore ? viewModel.explorePosts : viewModel.followingPosts;
               
               final isConnected = context.watch<ConnectivityService>().isConnected;
               
@@ -129,7 +161,7 @@ class _CommunityFeedWrapper extends StatelessWidget {
                 return SliverFillRemaining(
                   hasScrollBody: false,
                   child: NoInternetWidget(
-                    onRetry: () => isExplore ? viewModel.loadExploreFeed() : viewModel.loadFollowingFeed(),
+                    onRetry: () => widget.isExplore ? viewModel.loadExploreFeed() : viewModel.loadFollowingFeed(),
                   ),
                 );
               }
@@ -165,7 +197,7 @@ class _CommunityFeedWrapper extends StatelessWidget {
                           ),
                           const SizedBox(height: 16),
                           ElevatedButton(
-                            onPressed: () => isExplore ? viewModel.loadExploreFeed() : viewModel.loadFollowingFeed(),
+                            onPressed: () => widget.isExplore ? viewModel.loadExploreFeed() : viewModel.loadFollowingFeed(),
                             child: const Text('إعادة المحاولة'),
                           ),
                         ],
@@ -181,11 +213,11 @@ class _CommunityFeedWrapper extends StatelessWidget {
                 return SliverFillRemaining(
                   hasScrollBody: false,
                   child: EmptyState(
-                    icon: isExplore ? Icons.article_outlined : Icons.people_outline_rounded,
-                    title: isExplore 
+                    icon: widget.isExplore ? Icons.article_outlined : Icons.people_outline_rounded,
+                    title: widget.isExplore 
                         ? 'لا توجد منشورات بعد' 
                         : (isFollowingAnyone ? 'لا توجد منشورات' : 'لا تتابع أحداً بعد'),
-                    message: isExplore 
+                    message: widget.isExplore 
                         ? 'كن أول من ينشر في المجتمع' 
                         : (isFollowingAnyone ? 'الأشخاص الذين تتابعهم لم ينشروا شيئاً بعد' : 'تابع بعض المستخدمين لرؤية منشوراتهم هنا'),
                   ),
@@ -194,8 +226,18 @@ class _CommunityFeedWrapper extends StatelessWidget {
 
               return SliverList(
                 delegate: SliverChildBuilderDelegate(
-                  (context, index) => PostCard(post: posts[index]),
-                  childCount: posts.length,
+                  (context, index) {
+                    if (index == posts.length) {
+                      return viewModel.isLoadingMore
+                          ? const Padding(
+                              padding: EdgeInsets.all(16.0),
+                              child: Center(child: CircularProgressIndicator()),
+                            )
+                          : const SizedBox(height: 32); // Spacer at bottom
+                    }
+                    return PostCard(post: posts[index]);
+                  },
+                  childCount: posts.length + 1,
                 ),
               );
             },

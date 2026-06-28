@@ -13,6 +13,7 @@ class ChatRoomModel {
   final DateTime updatedAt;
   final bool isActive;
   final Map<String, bool> typingStatus; // userId -> isTyping
+  final OtherUser? otherUser;
 
   const ChatRoomModel({
     required this.id,
@@ -27,6 +28,7 @@ class ChatRoomModel {
     required this.updatedAt,
     this.isActive = true,
     this.typingStatus = const {},
+    this.otherUser,
   });
 
   /// Safely parse a dynamic value that could be a Firestore [Timestamp],
@@ -41,25 +43,17 @@ class ChatRoomModel {
 
   // Factory constructor from JSON
   factory ChatRoomModel.fromJson(Map<String, dynamic> json) {
-    // Handle API format: user_one/user_two vs standard participant_ids
     List<String> participantIds;
-    final userOneRaw = json['user_one'];
-    final userTwoRaw = json['user_two'];
-    
-    // Check if user_one/user_two are full objects (from API /chat/my-chats)
-    // or just IDs (from /chat/start or Firebase)
-    final bool userOneIsObject = userOneRaw is Map;
-    final bool userTwoIsObject = userTwoRaw is Map;
+    final otherUserRaw = json['other_user'];
+    OtherUser? otherUser;
 
     if (json['participant_ids'] != null) {
       participantIds = (json['participant_ids'] as List<dynamic>)
           .map((e) => e.toString())
           .toList();
-    } else if (userOneRaw != null && userTwoRaw != null) {
-      // Extract ID from object or use raw value
-      final idOne = userOneIsObject ? userOneRaw['id'].toString() : userOneRaw.toString();
-      final idTwo = userTwoIsObject ? userTwoRaw['id'].toString() : userTwoRaw.toString();
-      participantIds = [idOne, idTwo];
+    } else if (otherUserRaw != null && otherUserRaw is Map<String, dynamic>) {
+      otherUser = OtherUser.fromJson(otherUserRaw);
+      participantIds = [otherUser.id.toString()];
     } else {
       participantIds = [];
     }
@@ -71,11 +65,9 @@ class ChatRoomModel {
       lastMessageTimestamp = _parseDateTime(rawTime);
     }
     
-    // ✅ Extract participantNames and participantAvatars
     Map<String, String> participantNames = {};
     Map<String, String?> participantAvatars = {};
 
-    // Source 1: explicit participant_names / participant_avatars maps (from Firebase/cache)
     if (json['participant_names'] is Map) {
       participantNames = Map<String, String>.from(
         (json['participant_names'] as Map).map(
@@ -91,21 +83,12 @@ class ChatRoomModel {
       );
     }
 
-    // Source 2: extract from user_one / user_two full objects (from Laravel API)
-    // These take priority because they come directly from the database
-    if (userOneIsObject) {
-      final id = userOneRaw['id'].toString();
-      final name = userOneRaw['name']?.toString();
-      final avatar = userOneRaw['profile_image']?.toString() ?? userOneRaw['avatar_url']?.toString() ?? userOneRaw['avatar']?.toString();
-      if (name != null && name.isNotEmpty) participantNames[id] = name;
-      if (avatar != null && avatar.isNotEmpty) participantAvatars[id] = avatar;
-    }
-    if (userTwoIsObject) {
-      final id = userTwoRaw['id'].toString();
-      final name = userTwoRaw['name']?.toString();
-      final avatar = userTwoRaw['profile_image']?.toString() ?? userTwoRaw['avatar_url']?.toString() ?? userTwoRaw['avatar']?.toString();
-      if (name != null && name.isNotEmpty) participantNames[id] = name;
-      if (avatar != null && avatar.isNotEmpty) participantAvatars[id] = avatar;
+    if (otherUser != null) {
+      final otherIdStr = otherUser.id.toString();
+      participantNames[otherIdStr] = otherUser.name;
+      if (otherUser.profileImage != null) {
+        participantAvatars[otherIdStr] = otherUser.profileImage;
+      }
     }
 
     // Fallback: ensure every participant has a name entry
@@ -130,6 +113,7 @@ class ChatRoomModel {
       updatedAt: _parseDateTime(json['updated_at']) ?? DateTime.now(),
       isActive: json['is_active'] as bool? ?? true,
       typingStatus: Map<String, bool>.from(json['typing_status'] as Map? ?? {}),
+      otherUser: otherUser,
     );
   }
   // Convert to JSON
@@ -164,6 +148,7 @@ class ChatRoomModel {
     DateTime? updatedAt,
     bool? isActive,
     Map<String, bool>? typingStatus,
+    OtherUser? otherUser,
   }) {
     return ChatRoomModel(
       id: id ?? this.id,
@@ -178,6 +163,7 @@ class ChatRoomModel {
       updatedAt: updatedAt ?? this.updatedAt,
       isActive: isActive ?? this.isActive,
       typingStatus: typingStatus ?? this.typingStatus,
+      otherUser: otherUser ?? this.otherUser,
     );
   }
 
@@ -257,5 +243,28 @@ class ChatRoomModel {
   @override
   String toString() {
     return 'ChatRoomModel(id: $id, participants: ${participantIds.length})';
+  }
+}
+
+class OtherUser {
+  final int id;
+  final String name;
+  final String? profileImage;
+  final String role;
+
+  OtherUser({
+    required this.id,
+    required this.name,
+    this.profileImage,
+    required this.role,
+  });
+
+  factory OtherUser.fromJson(Map<String, dynamic> json) {
+    return OtherUser(
+      id: json['id'] is int ? json['id'] : int.tryParse(json['id'].toString()) ?? 0,
+      name: json['name'] ?? 'مستخدم',
+      profileImage: json['profile_image'] ?? json['avatar_url'] ?? json['avatar'],
+      role: json['role'] ?? '',
+    );
   }
 }

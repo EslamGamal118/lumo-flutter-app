@@ -63,6 +63,7 @@ class DioClient {
             // Defense in depth: only auto-logout if we ACTUALLY sent a token.
             // If we didn't send a token, it's an app-state/sync issue, not an expired session.
             if (hasAuthHeader) {
+              _prefs.remove('auth_token');
               onUnauthenticated?.call();
             } else {
               debugPrint('⚠️ [DioClient] Received 401 but NO auth header was sent. Ignoring global logout to prevent loops.');
