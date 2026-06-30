@@ -468,7 +468,7 @@ class FirebaseDataSource {
         .collection(FirebaseCollections.chats)
         .doc(chatRoomId)
         .set(
-      {'typing_status': {userId: isTyping}},
+      {'typing_status': {userId: isTyping ? DateTime.now().millisecondsSinceEpoch : false}},
       SetOptions(merge: true),
     );
   }

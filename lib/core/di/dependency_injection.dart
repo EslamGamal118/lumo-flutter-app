@@ -302,7 +302,7 @@ class DependencyInjection {
       () => AIViewModel(getIt<AIRepository>()),
     );
 
-    getIt.registerFactory<ChatViewModel>(
+    getIt.registerLazySingleton<ChatViewModel>(
       () => ChatViewModel(
         getIt<ChatRepository>(),
         getIt<FirebaseAuthService>(),

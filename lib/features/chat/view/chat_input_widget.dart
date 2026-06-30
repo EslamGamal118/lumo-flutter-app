@@ -65,7 +65,7 @@ class _ChatInputWidgetState extends State<ChatInputWidget> {
                 height: 48,
                 child: TextField(
                   controller: widget.controller,
-                  textAlign: TextAlign.right,
+                  textAlign: isAr ? TextAlign.right : TextAlign.left,
                   style: AppTextStyles.body,
                   enabled: !widget.isLoading,
                   decoration: InputDecoration(

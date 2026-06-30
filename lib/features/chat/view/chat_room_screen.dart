@@ -33,7 +33,7 @@ class ChatRoomScreen extends StatefulWidget {
   State<ChatRoomScreen> createState() => _ChatRoomScreenState();
 }
 
-class _ChatRoomScreenState extends State<ChatRoomScreen> {
+class _ChatRoomScreenState extends State<ChatRoomScreen> with WidgetsBindingObserver {
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
   late ChatViewModel _viewModel;
@@ -41,6 +41,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _viewModel = context.read<ChatViewModel>();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -61,12 +62,23 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     // leaveRoom() cancels subscriptions WITHOUT clearing the message cache.
     // Chat list refresh is handled by Navigator.push(...).then() at the call site.
     _viewModel.leaveRoom();
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      final currentUser = context.read<AuthProvider>().currentUser;
+      if (currentUser != null) {
+        _viewModel.stopTyping(widget.chatRoomId, currentUser.id);
+      }
+    }
   }
 
 
@@ -92,6 +104,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     final content = _messageController.text.trim();
     if (content.isEmpty) return;
 
+    if (_viewModel.isSending) return;
+
     final currentUser = context.read<AuthProvider>().currentUser;
     if (currentUser == null) return;
 
@@ -115,7 +129,16 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       receiverId: receiverId,
       receiverName: widget.otherUserName,
       receiverAvatarUrl: widget.otherUserAvatar,
-    );
+    ).then((success) {
+      if (!success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_viewModel.errorMessage ?? 'فشل إرسال الرسالة'),
+            backgroundColor: AppColors.destructive,
+          ),
+        );
+      }
+    });
 
     _scrollToBottom();
   }

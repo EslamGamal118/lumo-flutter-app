@@ -12,7 +12,7 @@ class ChatRoomModel {
   final DateTime createdAt;
   final DateTime updatedAt;
   final bool isActive;
-  final Map<String, bool> typingStatus; // userId -> isTyping
+  final Map<String, dynamic> typingStatus; // userId -> isTyping (bool or int timestamp)
   final OtherUser? otherUser;
 
   const ChatRoomModel({
@@ -112,7 +112,7 @@ class ChatRoomModel {
       createdAt: _parseDateTime(json['created_at']) ?? DateTime.now(),
       updatedAt: _parseDateTime(json['updated_at']) ?? DateTime.now(),
       isActive: json['is_active'] as bool? ?? true,
-      typingStatus: Map<String, bool>.from(json['typing_status'] as Map? ?? {}),
+      typingStatus: Map<String, dynamic>.from(json['typing_status'] as Map? ?? {}),
       otherUser: otherUser,
     );
   }
@@ -131,6 +131,12 @@ class ChatRoomModel {
       'updated_at': updatedAt.toIso8601String(),
       'is_active': isActive,
       'typing_status': typingStatus,
+      if (otherUser != null) 'other_user': {
+        'id': otherUser!.id,
+        'name': otherUser!.name,
+        'profile_image': otherUser!.profileImage,
+        'role': otherUser!.role,
+      },
     };
   }
 
@@ -147,7 +153,7 @@ class ChatRoomModel {
     DateTime? createdAt,
     DateTime? updatedAt,
     bool? isActive,
-    Map<String, bool>? typingStatus,
+    Map<String, dynamic>? typingStatus,
     OtherUser? otherUser,
   }) {
     return ChatRoomModel(
@@ -218,7 +224,20 @@ class ChatRoomModel {
 
   bool isOtherParticipantTyping(String currentUserId) {
     final otherId = getOtherParticipantId(currentUserId);
-    return typingStatus[otherId] ?? false;
+    final status = typingStatus[otherId];
+    if (status == null) return false;
+    
+    // Legacy support: if it's a bool
+    if (status is bool) return status;
+    
+    // New support: if it's a timestamp (int)
+    if (status is int) {
+      final now = DateTime.now().millisecondsSinceEpoch;
+      // We check if the timestamp is less than 5 seconds old (5000 ms)
+      return (now - status) < 5000;
+    }
+    
+    return false;
   }
   
   /// احصل على (اسم، صورة) المستخدم التاني مع جميع الـ fallbacks

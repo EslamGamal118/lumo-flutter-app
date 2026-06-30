@@ -21,12 +21,14 @@ class ChatViewModel extends ChangeNotifier {
   StreamSubscription<ChatRoomModel?>? _roomSubscription;
   StreamSubscription<List<ChatRoomModel>>? _roomsSubscription;
   Timer? _typingTimer;
+  Timer? _typingSyncTimer;
   bool _currentlyTyping = false;
 
   @override
   void dispose() {
     _isDisposed = true;
     _typingTimer?.cancel();
+    _typingSyncTimer?.cancel();
     _messagesSubscription?.cancel();
     _roomSubscription?.cancel();
     _roomsSubscription?.cancel();
@@ -165,6 +167,8 @@ class ChatViewModel extends ChangeNotifier {
       });
       _isLoading = false;
       _safeNotifyListeners();
+    } else {
+      _safeNotifyListeners();
     }
 
     try {
@@ -254,8 +258,22 @@ class ChatViewModel extends ChangeNotifier {
               return room;
             }).toList();
 
-            _chatRooms.clear();
-            _chatRooms.addAll(patchedStreamRooms);
+            for (final firebaseRoom in patchedStreamRooms) {
+              final idx = _chatRooms.indexWhere((r) => r.id == firebaseRoom.id);
+              if (idx != -1) {
+                // Merge: حافظ على الاسم والصورة من Laravel
+                _chatRooms[idx] = _chatRooms[idx].copyWith(
+                  lastMessage: firebaseRoom.lastMessage,
+                  lastMessageSenderId: firebaseRoom.lastMessageSenderId,
+                  lastMessageTimestamp: firebaseRoom.lastMessageTimestamp,
+                  unreadCounts: firebaseRoom.unreadCounts,
+                  typingStatus: firebaseRoom.typingStatus,
+                );
+              } else {
+                _chatRooms.add(firebaseRoom);
+              }
+            }
+
             _chatRooms.sort((a, b) {
               final aTime = a.lastMessageTimestamp ?? a.updatedAt;
               final bTime = b.lastMessageTimestamp ?? b.updatedAt;
@@ -318,7 +336,13 @@ class ChatViewModel extends ChangeNotifier {
           _currentChatRoom = room;
           final index = _chatRooms.indexWhere((r) => r.id == chatRoomId);
           if (index != -1 && room != null) {
-            _chatRooms[index] = room;
+            _chatRooms[index] = _chatRooms[index].copyWith(
+              lastMessage: room.lastMessage,
+              lastMessageSenderId: room.lastMessageSenderId,
+              lastMessageTimestamp: room.lastMessageTimestamp,
+              unreadCounts: room.unreadCounts,
+              typingStatus: room.typingStatus,
+            );
           }
           _safeNotifyListeners();
         },
@@ -342,8 +366,13 @@ class ChatViewModel extends ChangeNotifier {
              return;
           }
 
+          final existingMessages = _messages.where((m) => 
+               !messagesList.any((streamMsg) => streamMsg.id == m.id)
+          ).toList();
+          
           _messages.clear();
           _messages.addAll(messagesList);
+          _messages.addAll(existingMessages);
           // Ascending: oldest -> newest (UI shows newest at bottom)
           _messages.sort((a, b) => a.timestamp.compareTo(b.timestamp));
           _isLoading = false;
@@ -504,6 +533,17 @@ class ChatViewModel extends ChangeNotifier {
   /// WITHOUT clearing the message cache. Call from ChatRoomScreen.dispose().
   /// Also triggers a chat-list refresh so the last message preview is accurate.
   void leaveRoom() {
+    // إيقاف مؤشر الكتابة قبل مغادرة الغرفة
+    if (_currentlyTyping && _currentChatRoomId != null) {
+      _typingTimer?.cancel();
+      _typingSyncTimer?.cancel();
+      _currentlyTyping = false;
+      final uid = _userId ?? int.tryParse(_localDataSource.getCurrentUserId() ?? '') ?? 0;
+      _chatRepository.updateTypingStatus(
+        _currentChatRoomId!, uid, false
+      ).catchError((e) => debugPrint('Stop typing on leave failed: $e'));
+    }
+    
     _currentChatRoomId = null;
     _messagesSubscription?.cancel();
     _messagesSubscription = null;
@@ -520,10 +560,20 @@ class ChatViewModel extends ChangeNotifier {
       _chatRepository.updateTypingStatus(chatRoomId, userId, true).catchError((e) {
         debugPrint('Typing status update failed (unsupported platform?): $e');
       });
+      
+      _typingSyncTimer?.cancel();
+      _typingSyncTimer = Timer.periodic(const Duration(seconds: 2), (timer) {
+        if (_currentlyTyping) {
+           _chatRepository.updateTypingStatus(chatRoomId, userId, true).catchError((_) {});
+        } else {
+           timer.cancel();
+        }
+      });
     }
     _typingTimer?.cancel();
     _typingTimer = Timer(const Duration(seconds: 3), () {
       _currentlyTyping = false;
+      _typingSyncTimer?.cancel();
       _chatRepository.updateTypingStatus(chatRoomId, userId, false).catchError((e) {
         debugPrint('Typing status update failed (unsupported platform?): $e');
       });
@@ -533,6 +583,7 @@ class ChatViewModel extends ChangeNotifier {
   /// Force stop typing (e.g. on send).
   void stopTyping(String chatRoomId, int userId) {
     _typingTimer?.cancel();
+    _typingSyncTimer?.cancel();
     if (_currentlyTyping) {
       _currentlyTyping = false;
       _chatRepository.updateTypingStatus(chatRoomId, userId, false).catchError((e) {
@@ -545,6 +596,7 @@ class ChatViewModel extends ChangeNotifier {
 
   void resetState() {
     _typingTimer?.cancel();
+    _typingSyncTimer?.cancel();
     _currentlyTyping = false;
     _chatRooms.clear();
     _messages.clear();

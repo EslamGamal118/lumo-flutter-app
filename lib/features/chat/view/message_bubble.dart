@@ -44,7 +44,7 @@ class MessageBubble extends StatelessWidget {
                   // React user: bg-gradient-to-r from-[#2196F3] to-[#1565C0]
                   // React doctor: bg-white shadow-md
                   gradient: isMe ? AppColors.primaryGradient : null,
-                  color: isMe ? null : Colors.white,
+                  color: isMe ? null : Theme.of(context).cardColor,
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(20),
                     topRight: Radius.circular(20),
@@ -96,7 +96,7 @@ class MessageBubble extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: isMe
                                 ? Colors.white.withValues(alpha: 0.2)
-                                : Color(0xFFE3F2FD),
+                                : Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
@@ -107,7 +107,7 @@ class MessageBubble extends StatelessWidget {
                                 size: 20,
                                 color: isMe
                                     ? Colors.white
-                                    : Color(0xFF2196F3),
+                                    : Theme.of(context).colorScheme.primary,
                               ),
                               SizedBox(width: 8),
                               Flexible(
@@ -116,7 +116,7 @@ class MessageBubble extends StatelessWidget {
                                   style: AppTextStyles.caption.copyWith(
                                     color: isMe
                                         ? Colors.white
-                                        : Color(0xFF1A1A2E),
+                                        : Theme.of(context).textTheme.bodyLarge?.color,
                                   ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -131,7 +131,7 @@ class MessageBubble extends StatelessWidget {
                       Text(
                         message.content,
                         style: AppTextStyles.body.copyWith(
-                          color: isMe ? Colors.white : Color(0xFF1A1A2E),
+                          color: isMe ? Colors.white : Theme.of(context).textTheme.bodyLarge?.color,
                         ),
                       ),
                     SizedBox(height: 4),
