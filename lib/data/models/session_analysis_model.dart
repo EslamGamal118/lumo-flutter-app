@@ -44,6 +44,7 @@ class GazeData {
 
 class SessionAnalysisModel {
   final String id;
+  final int index; // Per-patient display index from backend (UI display only)
   final String title;
   final String summary;
   final String duration;
@@ -64,6 +65,7 @@ class SessionAnalysisModel {
 
   SessionAnalysisModel({
     required this.id,
+    this.index = 0,
     required this.title,
     required this.summary,
     required this.duration,
@@ -92,6 +94,9 @@ class SessionAnalysisModel {
     // Try session_id first (from session list API), fall back to id
     final sessionId = json['session_id'] ?? json['id'];
     
+    // Per-patient display index from backend
+    final sessionIndex = (json['index'] as num?)?.toInt() ?? 0;
+    
     // Try date field (from session list API)
     final dateStr = json['date'] as String?;
     
@@ -100,7 +105,8 @@ class SessionAnalysisModel {
 
     return SessionAnalysisModel(
       id: sessionId.toString(),
-      title: json['title'] as String? ?? 'جلسة #$sessionId',
+      index: sessionIndex,
+      title: json['title'] as String? ?? 'جلسة #$sessionIndex',
       summary: json['summary'] as String? ?? '',
       duration: json['duration'] as String? ?? '',
       engagementLevel: json['engagement_level'] as String? ?? '',
@@ -129,6 +135,9 @@ class SessionAnalysisModel {
   factory SessionAnalysisModel.fromApiJson(Map<String, dynamic> json) {
     // ── Parse ID ────────────────────────────────────────────────────────────
     final sessionId = json['session_id'] ?? json['id'];
+    
+    // ── Parse per-patient display index ─────────────────────────────────────
+    final sessionIndex = (json['index'] as num?)?.toInt() ?? 0;
     
     // ── Parse date ──────────────────────────────────────────────────────────
     final dateStr = json['date'] as String? ?? json['created_at'] as String?;
@@ -394,7 +403,8 @@ class SessionAnalysisModel {
 
     return SessionAnalysisModel(
       id: sessionId.toString(),
-      title: json['title'] as String? ?? 'جلسة #$sessionId',
+      index: sessionIndex,
+      title: json['title'] as String? ?? 'جلسة #$sessionIndex',
       summary: summary,
       duration: duration,
       engagementLevel: engagementLevel,
@@ -437,11 +447,58 @@ class SessionAnalysisModel {
     }).toList();
   }
 
+  // ─── CopyWith ────────────────────────────────────────────────────────────
+
+  SessionAnalysisModel copyWith({
+    String? id,
+    int? index,
+    String? title,
+    String? summary,
+    String? duration,
+    String? engagementLevel,
+    bool? isComplete,
+    List<String>? recommendations,
+    List<EmotionData>? emotionDistribution,
+    Map<String, double>? gazeDistribution,
+    double? focusedPercentage,
+    double? notFocusedPercentage,
+    String? notes,
+    String? status,
+    String? startedAt,
+    String? endedAt,
+    String? date,
+    double? averageFocus,
+    Map<String, dynamic>? analytics,
+  }) {
+    return SessionAnalysisModel(
+      id: id ?? this.id,
+      index: index ?? this.index,
+      title: title ?? this.title,
+      summary: summary ?? this.summary,
+      duration: duration ?? this.duration,
+      engagementLevel: engagementLevel ?? this.engagementLevel,
+      isComplete: isComplete ?? this.isComplete,
+      recommendations: recommendations ?? this.recommendations,
+      emotionDistribution: emotionDistribution ?? this.emotionDistribution,
+      gazeDistribution: gazeDistribution ?? this.gazeDistribution,
+      focusedPercentage: focusedPercentage ?? this.focusedPercentage,
+      notFocusedPercentage: notFocusedPercentage ?? this.notFocusedPercentage,
+      notes: notes ?? this.notes,
+      status: status ?? this.status,
+      startedAt: startedAt ?? this.startedAt,
+      endedAt: endedAt ?? this.endedAt,
+      date: date ?? this.date,
+      averageFocus: averageFocus ?? this.averageFocus,
+      analytics: analytics ?? this.analytics,
+    );
+  }
+
   // ─── Serialization ───────────────────────────────────────────────────────
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'index': index,
       'title': title,
       'summary': summary,
       'duration': duration,

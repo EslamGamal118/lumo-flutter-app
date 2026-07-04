@@ -125,8 +125,8 @@ class SessionViewModel extends ChangeNotifier {
     final completedSessions = _patientSessions.where((s) => s.isComplete).toList();
     if (completedSessions.isEmpty) return;
 
-    // Get up to the 10 most recent completed sessions (the ones used in the chart)
-    final recentCompleted = completedSessions.take(10).toList();
+    // Get up to the 20 most recent completed sessions (the ones used in the chart)
+    final recentCompleted = completedSessions.take(20).toList();
 
     for (int i = 0; i < recentCompleted.length; i++) {
       final session = recentCompleted[i];
@@ -137,7 +137,7 @@ class SessionViewModel extends ChangeNotifier {
           // Replace the summary session with the full session in our list
           final index = _patientSessions.indexWhere((s) => s.id == session.id);
           if (index != -1) {
-            _patientSessions[index] = fullSession;
+            _patientSessions[index] = fullSession.copyWith(index: session.index);
             notifyListeners(); // Update the UI immediately so the chart redraws
           }
         } catch (e) {

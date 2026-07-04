@@ -276,9 +276,9 @@ class _DoctorPatientDetailState extends State<DoctorPatientDetail> {
     // allSessions comes newest first, so we filter completed and then reverse to get oldest first.
     final validSessions = allSessions.where((s) => s.isComplete).toList().reversed.toList();
 
-    // Take only the last 10 items (most recent 10 completed sessions)
-    final chartSessions = validSessions.length > 10
-        ? validSessions.skip(validSessions.length - 10).toList()
+    // Take only the last 20 items (most recent 20 completed sessions)
+    final chartSessions = validSessions.length > 20
+        ? validSessions.skip(validSessions.length - 20).toList()
         : validSessions;
 
     Widget content;
@@ -338,14 +338,10 @@ class _DoctorPatientDetailState extends State<DoctorPatientDetail> {
                     }
                     
                     final session = chartSessions[idx];
-                    // Calculate the actual global session number (e.g., #5)
-                    final globalIndex = allSessions.indexOf(session);
-                    final displayIndex = allSessions.length - globalIndex;
-                    
                     return Padding(
                       padding: const EdgeInsets.only(top: 6),
                       child: Text(
-                        '#$displayIndex',
+                        '#${session.index}',
                         style: const TextStyle(fontSize: 10, color: Colors.grey),
                       ),
                     );
@@ -697,10 +693,8 @@ class _DoctorPatientDetailState extends State<DoctorPatientDetail> {
                 else
                   ...sessions.asMap().entries.map((entry) {
                     final session = entry.value;
-                    // Calculate displayIndex based on position in allSessions
-                    final globalIndex = allSessions.indexOf(session);
-                    final displayIndex = allSessions.length - globalIndex;
                     return Padding(
+                      key: ValueKey('session_${session.id}'),
                       padding: const EdgeInsets.only(bottom: 12),
                       child: Card(
                         elevation: 0,
@@ -715,7 +709,7 @@ class _DoctorPatientDetailState extends State<DoctorPatientDetail> {
                             vertical: 12,
                           ),
                           title: Text(
-                            'جلسة #$displayIndex',
+                            'جلسة #${session.index}',
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontFamily: 'Cairo',
@@ -734,7 +728,7 @@ class _DoctorPatientDetailState extends State<DoctorPatientDetail> {
                             ),
                           ),
                           trailing: _buildStatusChip(session),
-                          onTap: () => _handleSessionTap(session, displayIndex),
+                          onTap: () => _handleSessionTap(session, session.index),
                         ),
                       ),
                     );

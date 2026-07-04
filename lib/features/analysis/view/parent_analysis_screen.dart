@@ -300,8 +300,8 @@ class _ParentAnalysisScreenState extends State<ParentAnalysisScreen> {
       List<SessionAnalysisModel> allSessions) {
     final validSessions =
         allSessions.where((s) => s.isComplete).toList().reversed.toList();
-    final chartSessions = validSessions.length > 10
-        ? validSessions.skip(validSessions.length - 10).toList()
+    final chartSessions = validSessions.length > 20
+        ? validSessions.skip(validSessions.length - 20).toList()
         : validSessions;
 
     Widget content;
@@ -359,12 +359,10 @@ class _ParentAnalysisScreenState extends State<ParentAnalysisScreen> {
                       return const SizedBox.shrink();
                     }
                     final session = chartSessions[idx];
-                    final globalIndex = allSessions.indexOf(session);
-                    final displayIndex = allSessions.length - globalIndex;
                     return Padding(
                       padding: const EdgeInsets.only(top: 6),
                       child: Text(
-                        '#$displayIndex',
+                        '#${session.index}',
                         style:
                             const TextStyle(fontSize: 10, color: Colors.grey),
                       ),
@@ -546,10 +544,9 @@ class _ParentAnalysisScreenState extends State<ParentAnalysisScreen> {
                 // Session List
                 ...completedSessions.asMap().entries.map((entry) {
                   final session = entry.value;
-                  final globalIndex = allSessions.indexOf(session);
-                  final displayIndex = allSessions.length - globalIndex;
 
                   return Padding(
+                    key: ValueKey('session_${session.id}'),
                     padding: const EdgeInsets.only(bottom: 12),
                     child: Card(
                       elevation: 0,
@@ -564,7 +561,7 @@ class _ParentAnalysisScreenState extends State<ParentAnalysisScreen> {
                           vertical: 12,
                         ),
                         title: Text(
-                          'جلسة #$displayIndex',
+                          'جلسة #${session.index}',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontFamily: 'Cairo',
@@ -621,7 +618,7 @@ class _ParentAnalysisScreenState extends State<ParentAnalysisScreen> {
                               builder: (_) => ChangeNotifierProvider.value(
                                 value: viewModel,
                                 child: SessionDetailPlaceholderScreen(
-                                    displayIndex: displayIndex),
+                                    displayIndex: session.index),
                               ),
                             ),
                           );
