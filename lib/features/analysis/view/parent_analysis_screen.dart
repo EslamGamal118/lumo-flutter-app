@@ -300,8 +300,8 @@ class _ParentAnalysisScreenState extends State<ParentAnalysisScreen> {
       List<SessionAnalysisModel> allSessions) {
     // Sessions come newest-first; reverse to chronological for chart
     final validSessions = allSessions.where((s) => s.isComplete).toList().reversed.toList();
-    final chartSessions = validSessions.length > 20
-        ? validSessions.skip(validSessions.length - 20).toList()
+    final chartSessions = validSessions.length > 15
+        ? validSessions.skip(validSessions.length - 15).toList()
         : validSessions;
 
     Widget content;

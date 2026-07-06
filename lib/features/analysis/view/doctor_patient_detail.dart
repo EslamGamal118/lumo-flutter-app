@@ -276,9 +276,9 @@ class _DoctorPatientDetailState extends State<DoctorPatientDetail> {
     // allSessions comes newest first, so we filter completed and then reverse to get oldest first.
     final validSessions = allSessions.where((s) => s.isComplete).toList().reversed.toList();
 
-    // Take only the last 20 items (most recent 20 completed sessions)
-    final chartSessions = validSessions.length > 20
-        ? validSessions.skip(validSessions.length - 20).toList()
+    // Take only the last 15 items (most recent 15 completed sessions)
+    final chartSessions = validSessions.length > 15
+        ? validSessions.skip(validSessions.length - 15).toList()
         : validSessions;
 
     Widget content;
