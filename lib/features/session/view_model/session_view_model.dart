@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../../shared/providers/auth_provider.dart';
 import '../../../core/di/dependency_injection.dart';
 import '../../../core/services/notification_service.dart';
 import '../../../data/models/session_analysis_model.dart';
@@ -85,44 +87,72 @@ class SessionViewModel extends ChangeNotifier {
     }
   }
 
-  /// Reverses the backend's inverted index values.
+  /// Replicates the GUI's session ordering logic for consistency:
+  /// 1. Sort by session_id ascending (oldest/lowest ID first)
+  /// 2. Assign 1-based position index (Session #1 = lowest session_id)
+  /// 3. Reverse to newest-first for UI display
   ///
-  /// The backend returns index=1 for the *newest* session and the highest
-  /// index for the *oldest*, which is backwards. This helper flips them so
-  /// that index 1 = oldest session and the highest index = newest session.
-  /// It also sorts the list so that the newest session (highest index)
-  /// appears first in the UI list.
-  List<SessionAnalysisModel> _fixSessionOrder(List<SessionAnalysisModel> sessions) {
+  /// The GUI does: `sessions.sort((a, b) => a.sessionId.compareTo(b.sessionId))`
+  /// and displays `'Session #${index + 1}'`, so Session #1 = lowest session_id.
+  List<SessionAnalysisModel> _applyGuiOrdering(List<SessionAnalysisModel> sessions) {
     if (sessions.isEmpty) return sessions;
 
-    final totalSessions = sessions.length;
-    final fixed = sessions.map((s) {
-      // Flip: backend index 1 → becomes totalSessions, index N → becomes 1
-      final correctedIndex = totalSessions - s.index + 1;
-      return s.copyWith(index: correctedIndex > 0 ? correctedIndex : s.index);
-    }).toList();
+    // Step 1: Sort ascending by session_id (matching the GUI)
+    final sorted = List<SessionAnalysisModel>.from(sessions);
+    sorted.sort((a, b) {
+      final idA = int.tryParse(a.id) ?? 0;
+      final idB = int.tryParse(b.id) ?? 0;
+      return idA.compareTo(idB);
+    });
 
-    // Sort descending by corrected index so newest (highest #) is first in the list
-    fixed.sort((a, b) => b.index.compareTo(a.index));
-    return fixed;
+    // Step 2: Assign 1-based position index (Session #1 = oldest/lowest session_id)
+    final indexed = <SessionAnalysisModel>[];
+    for (int i = 0; i < sorted.length; i++) {
+      indexed.add(sorted[i].copyWith(index: i + 1));
+    }
+
+    // Step 3: Reverse so newest (highest index/session_id) appears first in the UI list
+    return indexed.reversed.toList();
   }
 
   /// Detects sessions that transitioned from in_progress → completed since
   /// the last fetch and fires a local notification for each one.
   void _detectNewlyCompletedSessions(List<SessionAnalysisModel> sessions) {
-    // Skip on the very first load (nothing to compare against)
-    if (_previousSessionStates.isEmpty && _patientSessions.isEmpty) {
-      // Just seed the state map and return
+    if (!getIt.isRegistered<SharedPreferences>() || !getIt.isRegistered<AuthProvider>()) {
+      return;
+    }
+    
+    final prefs = getIt<SharedPreferences>();
+    final authProvider = getIt<AuthProvider>();
+    final currentUser = authProvider.currentUser;
+    if (currentUser == null) return;
+    
+    final userId = currentUser.id;
+    final notifiedKey = 'notified_completed_sessions_$userId';
+    final seededKey = 'has_seeded_completed_sessions_$userId';
+    
+    final notifiedList = prefs.getStringList(notifiedKey) ?? [];
+    final notifiedSet = notifiedList.toSet();
+    final hasSeeded = prefs.getBool(seededKey) ?? false;
+
+    if (!hasSeeded) {
+      // First time loading sessions for this user. Just seed the state so we don't spam notifications for old sessions.
+      final completedIds = sessions.where((s) => s.isComplete).map((s) => s.id).toList();
+      prefs.setStringList(notifiedKey, completedIds);
+      prefs.setBool(seededKey, true);
+      
+      // Update memory state
       for (final s in sessions) {
         _previousSessionStates[s.id] = s.isComplete;
       }
       return;
     }
 
+    bool updatedPrefs = false;
+
     for (final session in sessions) {
-      final wasComplete = _previousSessionStates[session.id];
-      // Newly completed: was previously tracked as NOT complete, now IS complete
-      if (wasComplete == false && session.isComplete) {
+      if (session.isComplete && !notifiedSet.contains(session.id)) {
+        // It's complete and we haven't notified for it!
         debugPrint('🔔 Session #${session.index} (id=${session.id}) just completed!');
         try {
           final notificationService = getIt<NotificationService>();
@@ -133,10 +163,16 @@ class SessionViewModel extends ChangeNotifier {
         } catch (e) {
           debugPrint('⚠️ Failed to show completion notification: $e');
         }
+        notifiedSet.add(session.id);
+        updatedPrefs = true;
       }
     }
 
-    // Update the state map with current values
+    if (updatedPrefs) {
+      prefs.setStringList(notifiedKey, notifiedSet.toList());
+    }
+
+    // Update memory state
     _previousSessionStates.clear();
     for (final s in sessions) {
       _previousSessionStates[s.id] = s.isComplete;
@@ -152,9 +188,9 @@ class SessionViewModel extends ChangeNotifier {
 
     try {
       final sessions = await _sessionRepository.getPatientSessions(patientId);
-      final fixed = _fixSessionOrder(sessions);
-      _detectNewlyCompletedSessions(fixed);
-      _patientSessions = fixed;
+      final ordered = _applyGuiOrdering(sessions);
+      _detectNewlyCompletedSessions(ordered);
+      _patientSessions = ordered;
       _isLoading = false;
       notifyListeners();
       _fetchFullDetailsForChart();
@@ -174,9 +210,9 @@ class SessionViewModel extends ChangeNotifier {
 
     try {
       final sessions = await _sessionRepository.getMySessions();
-      final fixed = _fixSessionOrder(sessions);
-      _detectNewlyCompletedSessions(fixed);
-      _patientSessions = fixed;
+      final ordered = _applyGuiOrdering(sessions);
+      _detectNewlyCompletedSessions(ordered);
+      _patientSessions = ordered;
       _isLoading = false;
       notifyListeners();
       _fetchFullDetailsForChart();
