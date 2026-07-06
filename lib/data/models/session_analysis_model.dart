@@ -181,6 +181,26 @@ class SessionAnalysisModel {
                 firstAnalytic[key] = null;
               }
             }
+          } else {
+            // ── Merge story/voice fields from ANY segment that has them ──
+            // The stories segment may not be the first one, so we scan all
+            // segments and pull story_trait, speech_text, and is_correct
+            // from whichever segment actually contains them.
+            for (final key in ['speech_text', 'story_trait', 'is_correct', 'is_answer_correct']) {
+              final val = segAnalytic[key];
+              if (val != null &&
+                  !(val is String && val.trim().toLowerCase() == 'null') &&
+                  !(val is String && val.trim().isEmpty)) {
+                // Normalize is_answer_correct → is_correct for consistency
+                final targetKey = key == 'is_answer_correct' ? 'is_correct' : key;
+                // Only overwrite if current firstAnalytic doesn't already have a valid value
+                final existing = firstAnalytic![targetKey];
+                if (existing == null ||
+                    (existing is String && (existing.trim().isEmpty || existing.trim().toLowerCase() == 'null'))) {
+                  firstAnalytic![targetKey] = val;
+                }
+              }
+            }
           }
 
           // Accumulate emotions (Exact AI Key: 'emotion_distribution' or fallback 'emotions')
@@ -218,6 +238,14 @@ class SessionAnalysisModel {
             segmentFocusPctSum += segFocus;
             segmentFocusCount++;
           }
+        }
+      }
+
+      // ── Also normalize is_answer_correct in firstAnalytic itself ──────
+      if (firstAnalytic != null) {
+        // If firstAnalytic has is_answer_correct but not is_correct, copy it
+        if (firstAnalytic!['is_correct'] == null && firstAnalytic!['is_answer_correct'] != null) {
+          firstAnalytic!['is_correct'] = firstAnalytic!['is_answer_correct'];
         }
       }
     }

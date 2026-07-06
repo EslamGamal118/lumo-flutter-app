@@ -309,6 +309,13 @@ class _DoctorPatientDetailState extends State<DoctorPatientDetail> {
         maxX += 1;
       }
 
+      // Smart label interval: show every Nth label to avoid clutter on mobile
+      final int labelInterval = chartSessions.length <= 5
+          ? 1
+          : chartSessions.length <= 10
+              ? 2
+              : 5;
+
       content = SizedBox(
         height: 180,
         child: LineChart(
@@ -338,6 +345,15 @@ class _DoctorPatientDetailState extends State<DoctorPatientDetail> {
                     }
                     
                     final session = chartSessions[idx];
+                    // Always show first, last, and every Nth label
+                    final isFirst = idx == 0;
+                    final isLast = idx == chartSessions.length - 1;
+                    final isNth = (session.index % labelInterval) == 0;
+                    
+                    if (!isFirst && !isLast && !isNth) {
+                      return const SizedBox.shrink();
+                    }
+                    
                     return Padding(
                       padding: const EdgeInsets.only(top: 6),
                       child: Text(
@@ -363,6 +379,27 @@ class _DoctorPatientDetailState extends State<DoctorPatientDetail> {
               rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
             ),
             borderData: FlBorderData(show: false),
+            lineTouchData: LineTouchData(
+              enabled: true,
+              touchTooltipData: LineTouchTooltipData(
+                getTooltipItems: (touchedSpots) {
+                  return touchedSpots.map((spot) {
+                    final idx = spot.x.toInt() - 1;
+                    if (idx < 0 || idx >= chartSessions.length) return null;
+                    final session = chartSessions[idx];
+                    return LineTooltipItem(
+                      'جلسة #${session.index}\n${spot.y.toStringAsFixed(0)}%',
+                      TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Cairo',
+                        fontSize: 12,
+                      ),
+                    );
+                  }).toList();
+                },
+              ),
+            ),
             lineBarsData: [
               LineChartBarData(
                 spots: spots,
@@ -630,7 +667,7 @@ class _DoctorPatientDetailState extends State<DoctorPatientDetail> {
                   ? allSessions.where((s) => s.isComplete).toList()
                   : allSessions.where((s) => !s.isComplete).toList();
 
-          // Cumulative focus data (completed sessions only, reversed for chronological order)
+          // Cumulative focus data (completed sessions only, reversed to chronological for chart)
           final completedSessions = allSessions.where((s) => s.isComplete).toList().reversed.toList();
 
           return RefreshIndicator(

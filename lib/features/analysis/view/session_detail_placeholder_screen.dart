@@ -562,7 +562,7 @@ class _SessionDetailPlaceholderScreenState
         _sessionData.analytics?['speech_text']?.toString().trim() ?? '';
     final storyTrait =
         _sessionData.analytics?['story_trait']?.toString().trim() ?? '';
-    final isCorrect = _sessionData.analytics?['is_correct'] as bool?;
+    final isCorrect = (_sessionData.analytics?['is_correct'] ?? _sessionData.analytics?['is_answer_correct']) as bool?;
 
     // The backend might return the keys with empty strings, nulls, or default booleans
     // even for image-only sessions. So we check if there's actual text.

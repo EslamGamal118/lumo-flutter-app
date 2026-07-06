@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../../core/di/dependency_injection.dart';
+import '../../../core/services/notification_service.dart';
 import '../../../data/models/session_analysis_model.dart';
 import '../../../data/repositories/session_repository.dart';
 import '../models/session_part.dart';
@@ -51,6 +53,10 @@ class SessionViewModel extends ChangeNotifier {
   /// The session ID of the currently created/active session.
   int? _activeSessionId;
 
+  /// Tracks previous session completion states to detect newly completed sessions.
+  /// Key: session ID, Value: was completed in the last fetch.
+  final Map<String, bool> _previousSessionStates = {};
+
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   SessionAnalysisModel? get sessionDetails => _sessionDetails;
@@ -79,6 +85,64 @@ class SessionViewModel extends ChangeNotifier {
     }
   }
 
+  /// Reverses the backend's inverted index values.
+  ///
+  /// The backend returns index=1 for the *newest* session and the highest
+  /// index for the *oldest*, which is backwards. This helper flips them so
+  /// that index 1 = oldest session and the highest index = newest session.
+  /// It also sorts the list so that the newest session (highest index)
+  /// appears first in the UI list.
+  List<SessionAnalysisModel> _fixSessionOrder(List<SessionAnalysisModel> sessions) {
+    if (sessions.isEmpty) return sessions;
+
+    final totalSessions = sessions.length;
+    final fixed = sessions.map((s) {
+      // Flip: backend index 1 → becomes totalSessions, index N → becomes 1
+      final correctedIndex = totalSessions - s.index + 1;
+      return s.copyWith(index: correctedIndex > 0 ? correctedIndex : s.index);
+    }).toList();
+
+    // Sort descending by corrected index so newest (highest #) is first in the list
+    fixed.sort((a, b) => b.index.compareTo(a.index));
+    return fixed;
+  }
+
+  /// Detects sessions that transitioned from in_progress → completed since
+  /// the last fetch and fires a local notification for each one.
+  void _detectNewlyCompletedSessions(List<SessionAnalysisModel> sessions) {
+    // Skip on the very first load (nothing to compare against)
+    if (_previousSessionStates.isEmpty && _patientSessions.isEmpty) {
+      // Just seed the state map and return
+      for (final s in sessions) {
+        _previousSessionStates[s.id] = s.isComplete;
+      }
+      return;
+    }
+
+    for (final session in sessions) {
+      final wasComplete = _previousSessionStates[session.id];
+      // Newly completed: was previously tracked as NOT complete, now IS complete
+      if (wasComplete == false && session.isComplete) {
+        debugPrint('🔔 Session #${session.index} (id=${session.id}) just completed!');
+        try {
+          final notificationService = getIt<NotificationService>();
+          notificationService.showSessionCompletedNotification(
+            sessionIndex: session.index,
+            sessionId: session.id,
+          );
+        } catch (e) {
+          debugPrint('⚠️ Failed to show completion notification: $e');
+        }
+      }
+    }
+
+    // Update the state map with current values
+    _previousSessionStates.clear();
+    for (final s in sessions) {
+      _previousSessionStates[s.id] = s.isComplete;
+    }
+  }
+
   /// Loads all sessions for a patient (doctor's view).
   /// Calls GET /sessions/list/{patientId}.
   Future<void> loadPatientSessions(int patientId) async {
@@ -87,7 +151,10 @@ class SessionViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _patientSessions = await _sessionRepository.getPatientSessions(patientId);
+      final sessions = await _sessionRepository.getPatientSessions(patientId);
+      final fixed = _fixSessionOrder(sessions);
+      _detectNewlyCompletedSessions(fixed);
+      _patientSessions = fixed;
       _isLoading = false;
       notifyListeners();
       _fetchFullDetailsForChart();
@@ -106,7 +173,10 @@ class SessionViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _patientSessions = await _sessionRepository.getMySessions();
+      final sessions = await _sessionRepository.getMySessions();
+      final fixed = _fixSessionOrder(sessions);
+      _detectNewlyCompletedSessions(fixed);
+      _patientSessions = fixed;
       _isLoading = false;
       notifyListeners();
       _fetchFullDetailsForChart();

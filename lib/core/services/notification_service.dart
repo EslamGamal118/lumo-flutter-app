@@ -150,6 +150,10 @@ class NotificationService {
           }
           break;
         // Additional types like 'connection_request' or 'analysis' can be added here
+        case 'session_completed':
+          // Navigate to the analysis tab (index 1 in MainLayout)
+          Navigator.pushNamed(context, RouteNames.mainLayout);
+          break;
       }
     } else {
       debugPrint('Global Navigator context is null. Cannot navigate to $type:$id');
@@ -312,6 +316,26 @@ class NotificationService {
       title: 'تحليل جديد',
       body: 'قام الدكتور $doctorName بإضافة تحليل جديد',
       payload: 'analysis:$analysisId',
+    );
+  }
+
+  /// Shows a notification when a session analysis is completed by the robot/AI.
+  /// Works for both doctor and parent roles.
+  Future<void> showSessionCompletedNotification({
+    required int sessionIndex,
+    required String sessionId,
+    String? patientName,
+  }) async {
+    final title = '✅ تحليل جلسة مكتمل';
+    final body = patientName != null && patientName.isNotEmpty
+        ? 'تم اكتمال تحليل الجلسة #$sessionIndex للمريض $patientName'
+        : 'تم اكتمال تحليل الجلسة #$sessionIndex — يمكنك الاطلاع على النتائج الآن';
+
+    await showNotification(
+      id: sessionId.hashCode & 0x7FFFFFFF,
+      title: title,
+      body: body,
+      payload: 'session_completed:$sessionId',
     );
   }
 }

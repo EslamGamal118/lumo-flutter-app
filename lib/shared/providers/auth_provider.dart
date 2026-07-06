@@ -220,13 +220,15 @@ class AuthProvider extends ChangeNotifier {
 
         final t = (type ?? '').toLowerCase();
         final isConnectionNotification = t.contains('connection') || t.contains('request');
+        final isSessionCompleted = t == 'session_completed';
 
-        if (isConnectionNotification) {
+        if (isConnectionNotification || isSessionCompleted) {
           // Show system notification (status bar)
           getIt<NotificationService>().showNotification(
             id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
             title: title,
             body: body,
+            payload: isSessionCompleted ? 'session_completed:${message.data['id']}' : null,
           );
 
           // Show in-app banner + refresh list

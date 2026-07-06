@@ -298,8 +298,8 @@ class _ParentAnalysisScreenState extends State<ParentAnalysisScreen> {
 
   Widget _buildFocusTrendChart(List<SessionAnalysisModel> completedSessions,
       List<SessionAnalysisModel> allSessions) {
-    final validSessions =
-        allSessions.where((s) => s.isComplete).toList().reversed.toList();
+    // Sessions come newest-first; reverse to chronological for chart
+    final validSessions = allSessions.where((s) => s.isComplete).toList().reversed.toList();
     final chartSessions = validSessions.length > 20
         ? validSessions.skip(validSessions.length - 20).toList()
         : validSessions;
@@ -331,6 +331,13 @@ class _ParentAnalysisScreenState extends State<ParentAnalysisScreen> {
         maxX += 1;
       }
 
+      // Smart label interval: show every Nth label to avoid clutter on mobile
+      final int labelInterval = chartSessions.length <= 5
+          ? 1
+          : chartSessions.length <= 10
+              ? 2
+              : 5;
+
       content = SizedBox(
         height: 180,
         child: LineChart(
@@ -359,6 +366,15 @@ class _ParentAnalysisScreenState extends State<ParentAnalysisScreen> {
                       return const SizedBox.shrink();
                     }
                     final session = chartSessions[idx];
+                    // Always show first, last, and every Nth label
+                    final isFirst = idx == 0;
+                    final isLast = idx == chartSessions.length - 1;
+                    final isNth = (session.index % labelInterval) == 0;
+
+                    if (!isFirst && !isLast && !isNth) {
+                      return const SizedBox.shrink();
+                    }
+
                     return Padding(
                       padding: const EdgeInsets.only(top: 6),
                       child: Text(
@@ -387,6 +403,27 @@ class _ParentAnalysisScreenState extends State<ParentAnalysisScreen> {
                   const AxisTitles(sideTitles: SideTitles(showTitles: false)),
             ),
             borderData: FlBorderData(show: false),
+            lineTouchData: LineTouchData(
+              enabled: true,
+              touchTooltipData: LineTouchTooltipData(
+                getTooltipItems: (touchedSpots) {
+                  return touchedSpots.map((spot) {
+                    final idx = spot.x.toInt() - 1;
+                    if (idx < 0 || idx >= chartSessions.length) return null;
+                    final session = chartSessions[idx];
+                    return LineTooltipItem(
+                      'جلسة #${session.index}\n${spot.y.toStringAsFixed(0)}%',
+                      TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Cairo',
+                        fontSize: 12,
+                      ),
+                    );
+                  }).toList();
+                },
+              ),
+            ),
             lineBarsData: [
               LineChartBarData(
                 spots: spots,

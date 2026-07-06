@@ -158,6 +158,11 @@ class AIRepository {
     }
   }
 
+  String? _cachedDoctorContext;
+  DateTime? _lastDoctorContextFetch;
+  String? _cachedParentContext;
+  DateTime? _lastParentContextFetch;
+
   // ==================== DYNAMIC CONTEXT BUILDER ====================
 
   /// Builds a rich context string from real app data (patients, sessions,
@@ -170,16 +175,24 @@ class AIRepository {
 
     try {
       if (resolvedRole == 'doctor') {
+        if (_cachedDoctorContext != null &&
+            _lastDoctorContextFetch != null &&
+            DateTime.now().difference(_lastDoctorContextFetch!).inMinutes < 5) {
+          parts.add(_cachedDoctorContext!);
+          return parts.join('\n');
+        }
+
+        final doctorParts = <String>[];
         // ── Doctor: fetch patients and their recent sessions ──
         final patients = await _patientRepository.getDoctorPatients();
         if (patients.isNotEmpty) {
-          parts.add('المرضى المرتبطون بهذا الطبيب (${patients.length} مريض):');
+          doctorParts.add('المرضى المرتبطون بهذا الطبيب (${patients.length} مريض):');
           for (final patient in patients) {
             String patientLabel = patient.name;
             if (patient is ParentModel && patient.childName.isNotEmpty) {
               patientLabel = 'الطفل: ${patient.childName} (ولي الأمر: ${patient.name})';
             }
-            parts.add('- $patientLabel');
+            doctorParts.add('- $patientLabel');
 
             // Fetch patient profile/insights
             try {
@@ -191,10 +204,10 @@ class AIRepository {
                   if (excludedKeys.contains(entry.key.toLowerCase())) continue;
                   if (entry.value != null && entry.value.toString().isNotEmpty && entry.value.toString() != 'null') {
                     if (!hasInsights) {
-                      parts.add('  ملف الحالة:');
+                      doctorParts.add('  ملف الحالة:');
                       hasInsights = true;
                     }
-                    parts.add('    ${entry.key}: ${entry.value}');
+                    doctorParts.add('    ${entry.key}: ${entry.value}');
                   }
                 }
               }
@@ -206,25 +219,32 @@ class AIRepository {
             try {
               final sessions = await _sessionRepository.getPatientSessions(patient.id);
               if (sessions.isNotEmpty) {
+                // Ensure ascending order (oldest/Session 1 first)
+                sessions.sort((a, b) {
+                  final dateA = DateTime.tryParse(a.startedAt ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+                  final dateB = DateTime.tryParse(b.startedAt ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+                  return dateA.compareTo(dateB);
+                });
+                
                 final recentSessions = sessions.length > 5
                     ? sessions.sublist(sessions.length - 5)
                     : sessions;
-                parts.add('  آخر ${recentSessions.length} جلسات:');
+                doctorParts.add('  آخر ${recentSessions.length} جلسات:');
                 for (final session in recentSessions) {
                   final status = session.isComplete ? 'مكتملة' : (session.status ?? 'قيد التنفيذ');
                   final date = session.date ?? session.startedAt?.split('T').first ?? 'غير محدد';
-                  parts.add('  • التاريخ: $date | الحالة: $status');
+                  doctorParts.add('  • التاريخ: $date | الحالة: $status');
                   if (session.duration.isNotEmpty) {
-                    parts.add('    المدة: ${session.duration}');
+                    doctorParts.add('    المدة: ${session.duration}');
                   }
                   if (session.engagementLevel.isNotEmpty) {
-                    parts.add('    التفاعل: ${session.engagementLevel}');
+                    doctorParts.add('    التفاعل: ${session.engagementLevel}');
                   }
                   if (session.summary.isNotEmpty) {
-                    parts.add('    الملخص: ${session.summary}');
+                    doctorParts.add('    الملخص: ${session.summary}');
                   }
                   if (session.focusedPercentage > 0) {
-                    parts.add('    التركيز: ${(session.focusedPercentage * 100).toStringAsFixed(0)}%');
+                    doctorParts.add('    التركيز: ${(session.focusedPercentage * 100).toStringAsFixed(0)}%');
                   }
                   if (session.emotionDistribution.isNotEmpty) {
                     final significant = session.emotionDistribution
@@ -235,49 +255,69 @@ class AIRepository {
                       final emotions = significant
                           .map((e) => '${e.label} (${(e.percentage * 100).toInt()}%)')
                           .join(', ');
-                      parts.add('    المشاعر البارزة: $emotions');
+                      doctorParts.add('    المشاعر البارزة: $emotions');
                     } else {
-                      parts.add('    المشاعر: هادئ/محايد');
+                      doctorParts.add('    المشاعر: هادئ/محايد');
                     }
                   }
                   if (session.recommendations.isNotEmpty) {
-                    parts.add('    التوصيات: ${session.recommendations.join("، ")}');
+                    doctorParts.add('    التوصيات: ${session.recommendations.join("، ")}');
                   }
                 }
               } else {
-                parts.add('  لا توجد جلسات مسجلة بعد.');
+                doctorParts.add('  لا توجد جلسات مسجلة بعد.');
               }
             } catch (e) {
               debugPrint('⚠️ Failed to fetch sessions for patient ${patient.id}: $e');
             }
           }
         } else {
-          parts.add('لا يوجد مرضى مرتبطون بهذا الطبيب حالياً.');
+          doctorParts.add('لا يوجد مرضى مرتبطون بهذا الطبيب حالياً.');
         }
+        
+        _cachedDoctorContext = doctorParts.join('\n');
+        _lastDoctorContextFetch = DateTime.now();
+        parts.add(_cachedDoctorContext!);
+        
       } else {
+        if (_cachedParentContext != null &&
+            _lastParentContextFetch != null &&
+            DateTime.now().difference(_lastParentContextFetch!).inMinutes < 5) {
+          parts.add(_cachedParentContext!);
+          return parts.join('\n');
+        }
+
+        final parentParts = <String>[];
         // ── Parent: include child name and own sessions ──
         if (childName.isNotEmpty) {
-          parts.add('معلومات الطفل الحالي: $childName');
+          parentParts.add('معلومات الطفل الحالي: $childName');
         }
         try {
           final sessions = await _sessionRepository.getMySessions();
           if (sessions.isNotEmpty) {
+            // Ensure ascending order (oldest/Session 1 first)
+            sessions.sort((a, b) {
+              final dateA = DateTime.tryParse(a.startedAt ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+              final dateB = DateTime.tryParse(b.startedAt ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+              return dateA.compareTo(dateB);
+            });
+            
             final recentSessions = sessions.length > 5
                 ? sessions.sublist(sessions.length - 5)
                 : sessions;
-            parts.add('آخر ${recentSessions.length} جلسات:');
+            parentParts.add('آخر ${recentSessions.length} جلسات:');
             for (final session in recentSessions) {
               final status = session.isComplete ? 'مكتملة' : (session.status ?? 'قيد التنفيذ');
               final date = session.date ?? session.startedAt?.split('T').first ?? 'غير محدد';
-              parts.add('• التاريخ: $date | الحالة: $status');
+              parentParts.add('• التاريخ: $date | الحالة: $status');
               if (session.duration.isNotEmpty) {
-                parts.add('  المدة: ${session.duration}');
+                parentParts.add('  المدة: ${session.duration}');
               }
               if (session.summary.isNotEmpty) {
-                parts.add('  الملخص: ${session.summary}');
+                parentParts.add('  الملخص: ${session.summary}');
               }
               if (session.focusedPercentage > 0) {
-                parts.add('  التركيز: ${(session.focusedPercentage * 100).toStringAsFixed(0)}%');
+                parentParts.add('  التركيز: ${(session.focusedPercentage * 100).toStringAsFixed(0)}%');
               }
               if (session.emotionDistribution.isNotEmpty) {
                 final significant = session.emotionDistribution
@@ -288,9 +328,9 @@ class AIRepository {
                   final emotions = significant
                       .map((e) => '${e.label} (${(e.percentage * 100).toInt()}%)')
                       .join(', ');
-                  parts.add('  المشاعر البارزة: $emotions');
+                  parentParts.add('  المشاعر البارزة: $emotions');
                 } else {
-                  parts.add('  المشاعر: هادئ/محايد');
+                  parentParts.add('  المشاعر: هادئ/محايد');
                 }
               }
             }
@@ -298,6 +338,10 @@ class AIRepository {
         } catch (e) {
           debugPrint('⚠️ Failed to fetch parent sessions: $e');
         }
+        
+        _cachedParentContext = parentParts.join('\n');
+        _lastParentContextFetch = DateTime.now();
+        parts.add(_cachedParentContext!);
       }
     } catch (e) {
       debugPrint('⚠️ Failed to build dynamic context: $e');

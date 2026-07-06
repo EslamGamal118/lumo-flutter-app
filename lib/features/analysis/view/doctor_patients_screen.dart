@@ -68,7 +68,7 @@ class _DoctorPatientsScreenState extends State<DoctorPatientsScreen> {
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: RefreshIndicator(
         onRefresh: () async {
-          await patientProvider.fetchPatients();
+          await patientProvider.fetchPatients(forceRefresh: true);
         },
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
@@ -107,7 +107,7 @@ class _DoctorPatientsScreenState extends State<DoctorPatientsScreen> {
                     IconButton(
                       icon: const Icon(Icons.refresh, size: 20),
                       onPressed: () {
-                        patientProvider.fetchPatients();
+                        patientProvider.fetchPatients(forceRefresh: true);
                       },
                     ),
                   ],

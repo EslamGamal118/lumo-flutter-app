@@ -143,13 +143,27 @@ class PatientProvider with ChangeNotifier {
     }
   }
 
-  Future<void> fetchPatients() async {
+  DateTime? _lastFetchTime;
+
+  Future<void> fetchPatients({bool forceRefresh = false}) async {
+    if (_isLoading) return;
+
+    // Prevent redundant requests if data was fetched recently (within 30 seconds)
+    if (!forceRefresh && _lastFetchTime != null) {
+      final diff = DateTime.now().difference(_lastFetchTime!);
+      if (diff.inSeconds < 30 && _patients.isNotEmpty) {
+        return; // Use cached data
+      }
+    }
+
     _isLoading = true;
     _error = null;
+    // Only notify if we are actually starting a network request
     notifyListeners();
 
     try {
       _patients = await _patientRepository.getDoctorPatients();
+      _lastFetchTime = DateTime.now();
       await _localDataSource.savePatients(_patients.map((p) => p.toJson()).toList());
     } catch (e) {
       _error = e.toString();
