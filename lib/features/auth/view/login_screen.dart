@@ -137,7 +137,12 @@ class _LoginScreenState extends State<LoginScreen> with FormValidationMixin {
                   hint: (isAr ? 'أدخل رقم الجوال' : 'Enter your Mobile'),
                   prefixIcon: Icons.phone_android_outlined,
                   keyboardType: TextInputType.phone,
-                  validator: validatePhone,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return isAr ? 'رقم الجوال مطلوب' : 'Mobile number is required';
+                    }
+                    return null;
+                  },
                 ),
                 SizedBox(height: 20),
 
@@ -148,7 +153,12 @@ class _LoginScreenState extends State<LoginScreen> with FormValidationMixin {
                   hint: (isAr ? 'أدخل كلمة المرور' : 'enter_password'),
                   prefixIcon: Icons.lock_outline,
                   obscureText: true,
-                  validator: validatePassword,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return isAr ? 'كلمة المرور مطلوبة' : 'Password is required';
+                    }
+                    return null;
+                  },
                 ),
                 SizedBox(height: 12),
 
