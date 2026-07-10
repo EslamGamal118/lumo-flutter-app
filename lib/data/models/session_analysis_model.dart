@@ -129,9 +129,6 @@ class SessionAnalysisModel {
 
   // ─── API factory (for Islam's backend /sessions/{id}) ──────────────────────
 
-  /// Parses the new API response where:
-  ///   - `emotion_distribution` is `Map<String, double>` (e.g. {"Happy": 35.0})
-  ///   - Also handles session list response with `session_id`, `date`, `is_completed`
   factory SessionAnalysisModel.fromApiJson(Map<String, dynamic> json) {
     // ── Parse ID ────────────────────────────────────────────────────────────
     final sessionId = json['session_id'] ?? json['id'];
@@ -143,7 +140,6 @@ class SessionAnalysisModel {
     final dateStr = json['date'] as String? ?? json['created_at'] as String?;
 
     // ── Parse average_focus from top level ──────────────────────────────────
-    // API might return 'average_focus', 'focused_percentage', 'focus_score', or it might be inside 'analytic'
     final topAnalyticFocus = json['analytic'] is Map ? (json['analytic']['average_focus'] ?? json['analytic']['focus_score'] ?? json['analytic']['focused_percentage']) : null;
     final topAnalyticsFocus = json['analytics'] is Map ? (json['analytics']['average_focus'] ?? json['analytics']['focus_score'] ?? json['analytics']['focused_percentage']) : null;
     
@@ -156,14 +152,18 @@ class SessionAnalysisModel {
     }
 
     // ── Extract analytics from segments[] ───────────────────────────────────
-    // The emotion_distribution and gaze_distribution live inside each
-    // segment's 'analytic' field. We aggregate across all segments.
     final Map<String, double> aggregatedEmotions = {};
     final Map<String, double> aggregatedGaze = {};
     double segmentFocusPctSum = 0.0;
     int segmentFocusCount = 0;
     int segmentsWithEmotions = 0;
+    
     Map<String, dynamic>? firstAnalytic;
+    
+    // Independent variables to catch correct data regardless of speech_text being null
+    bool? finalIsCorrect;
+    String? finalStoryTrait;
+    String? finalSpeechText;
 
     final segments = json['segments'];
     if (segments is List) {
@@ -174,36 +174,31 @@ class SessionAnalysisModel {
         if (segAnalytic is Map<String, dynamic>) {
           if (firstAnalytic == null) {
             firstAnalytic = Map<String, dynamic>.from(segAnalytic);
-            // Defensively clean literal "null" strings
-            for (final key in ['speech_text', 'story_trait']) {
-              final val = firstAnalytic[key];
-              if (val is String && val.trim().toLowerCase() == 'null') {
-                firstAnalytic[key] = null;
-              }
-            }
-          } else {
-            // ── Merge story/voice fields from ANY segment that has them ──
-            // The stories segment may not be the first one, so we scan all
-            // segments and pull story_trait, speech_text, and is_correct
-            // from whichever segment actually contains them.
-            for (final key in ['speech_text', 'story_trait', 'is_correct', 'is_answer_correct']) {
-              final val = segAnalytic[key];
-              if (val != null &&
-                  !(val is String && val.trim().toLowerCase() == 'null') &&
-                  !(val is String && val.trim().isEmpty)) {
-                // Normalize is_answer_correct → is_correct for consistency
-                final targetKey = key == 'is_answer_correct' ? 'is_correct' : key;
-                // Only overwrite if current firstAnalytic doesn't already have a valid value
-                final existing = firstAnalytic![targetKey];
-                if (existing == null ||
-                    (existing is String && (existing.trim().isEmpty || existing.trim().toLowerCase() == 'null'))) {
-                  firstAnalytic![targetKey] = val;
-                }
-              }
+          }
+
+          // 1. Explicitly catch 'is_correct' independent of everything else
+          final rawIsCorrect = segAnalytic['is_correct'] ?? segAnalytic['is_answer_correct'];
+          if (rawIsCorrect != null) {
+            final bool parsedBool = rawIsCorrect == true || rawIsCorrect.toString().toLowerCase() == 'true';
+            // Once true is found in any segment, lock it in. Otherwise, set to false.
+            if (finalIsCorrect == null || parsedBool) {
+              finalIsCorrect = parsedBool;
             }
           }
 
-          // Accumulate emotions (Exact AI Key: 'emotion_distribution' or fallback 'emotions')
+          // 2. Catch story trait
+          final rawStory = segAnalytic['story_trait'];
+          if (rawStory != null && rawStory.toString().toLowerCase() != 'null' && rawStory.toString().trim().isNotEmpty) {
+            finalStoryTrait = rawStory.toString();
+          }
+
+          // 3. Catch speech text (even if null, it won't affect is_correct)
+          final rawSpeech = segAnalytic['speech_text'];
+          if (rawSpeech != null && rawSpeech.toString().toLowerCase() != 'null' && rawSpeech.toString().trim().isNotEmpty) {
+            finalSpeechText = rawSpeech.toString();
+          }
+
+          // Accumulate emotions
           dynamic rawEmo = segAnalytic['emotion_distribution'] ?? segAnalytic['emotions'];
           if (rawEmo is String) {
             try { rawEmo = jsonDecode(rawEmo); } catch (_) {}
@@ -215,7 +210,7 @@ class SessionAnalysisModel {
             }
           }
 
-          // Accumulate gaze (Exact AI Key: 'gaze_distribution' or fallback 'gaze')
+          // Accumulate gaze
           dynamic rawGz = segAnalytic['gaze_distribution'] ?? segAnalytic['gaze'];
           if (rawGz is String) {
             try { rawGz = jsonDecode(rawGz); } catch (_) {}
@@ -226,7 +221,7 @@ class SessionAnalysisModel {
             }
           }
 
-          // Accumulate focus (Exact AI Key: 'focus_percentage' or fallback 'focus_score')
+          // Accumulate focus
           final rawFocusScore = segAnalytic['focus_percentage'] ?? segAnalytic['focus_score'];
           double? segFocus;
           if (rawFocusScore is num) {
@@ -241,20 +236,28 @@ class SessionAnalysisModel {
         }
       }
 
-      // ── Also normalize is_answer_correct in firstAnalytic itself ──────
+      // Re-inject the properly isolated variables back into firstAnalytic so the UI reads them correctly
       if (firstAnalytic != null) {
-        // If firstAnalytic has is_answer_correct but not is_correct, copy it
-        if (firstAnalytic!['is_correct'] == null && firstAnalytic!['is_answer_correct'] != null) {
-          firstAnalytic!['is_correct'] = firstAnalytic!['is_answer_correct'];
+        if (finalIsCorrect != null) {
+          firstAnalytic!['is_correct'] = finalIsCorrect;
+        }
+        if (finalStoryTrait != null) {
+          firstAnalytic!['story_trait'] = finalStoryTrait;
+        } else {
+          firstAnalytic!['story_trait'] = null; // Clean it if it never existed
+        }
+        if (finalSpeechText != null) {
+          firstAnalytic!['speech_text'] = finalSpeechText;
+        } else {
+          firstAnalytic!['speech_text'] = null; // Clean it if it never existed
         }
       }
     }
 
-    // Fallback: check top-level analytic (non-segmented responses)
+    // Fallback: check top-level analytic
     final topAnalytic = json['analytic'] ?? json['analytics'];
     if (topAnalytic is Map<String, dynamic> && firstAnalytic == null) {
       firstAnalytic = Map<String, dynamic>.from(topAnalytic);
-      // Defensively clean literal "null" strings
       for (final key in ['speech_text', 'story_trait']) {
         final val = firstAnalytic[key];
         if (val is String && val.trim().toLowerCase() == 'null') {
@@ -301,7 +304,7 @@ class SessionAnalysisModel {
       }
     }
 
-    // ── Average emotions if from multiple segments ──────────────────────────
+    // ── Average emotions ──────────────────────────
     final Map<String, double> avgEmotions = {};
     if (segmentsWithEmotions > 1) {
       for (final e in aggregatedEmotions.entries) {
@@ -324,7 +327,6 @@ class SessionAnalysisModel {
       );
     }).toList();
 
-    // Fallback: if emotion_distribution was missing or null
     if (emotions.isEmpty) {
       emotions = [
         EmotionData('happy', _emojiFor('happy'), _labelAr('happy'), 0.0, _colorFor('happy')),
@@ -346,7 +348,6 @@ class SessionAnalysisModel {
     double finalFocusPct = 0.0;
     double finalNotFocusPct = 0.0;
 
-    // Helper: calculate focus from gaze data (CENTER = focused)
     double? gazeFocus() {
       if (gazeMap.isEmpty) return null;
       final centerPct = gazeMap['CENTER'] ?? 0.0;
@@ -355,31 +356,21 @@ class SessionAnalysisModel {
       return centerPct / totalGaze;
     }
 
-    debugPrint('🔍 [FOCUS CALC] avgFocus: $avgFocus, segmentFocusCount: $segmentFocusCount, gazeMap: $gazeMap');
-
     if (avgFocus != null && avgFocus > 0) {
-      // Backend provided a non-zero average_focus — trust it
       finalFocusPct = avgFocus > 1.0 ? avgFocus / 100.0 : avgFocus;
       finalNotFocusPct = 1.0 - finalFocusPct;
-      debugPrint('🔍 [FOCUS CALC] Using avgFocus > 0: $finalFocusPct');
     } else if (segmentFocusCount > 0) {
       final avg = segmentFocusPctSum / segmentFocusCount;
       finalFocusPct = avg > 1.0 ? avg / 100.0 : avg;
       finalNotFocusPct = 1.0 - finalFocusPct;
-      debugPrint('🔍 [FOCUS CALC] Using segment avg: $finalFocusPct');
     } else {
-      // Fallback: derive focus from gaze data (CENTER = focused)
       final gazeDerived = gazeFocus();
-      debugPrint('🔍 [FOCUS CALC] gazeDerived: $gazeDerived');
       if (gazeDerived != null) {
         finalFocusPct = gazeDerived;
         finalNotFocusPct = 1.0 - finalFocusPct;
-        debugPrint('🔍 [FOCUS CALC] Using gazeDerived: $finalFocusPct');
       } else if (avgFocus != null) {
-        // avgFocus is 0 and no gaze data — use it as-is
         finalFocusPct = 0.0;
         finalNotFocusPct = 1.0;
-        debugPrint('🔍 [FOCUS CALC] Using avgFocus=0 fallback: $finalFocusPct');
       }
     }
 

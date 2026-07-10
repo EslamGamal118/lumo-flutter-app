@@ -90,10 +90,6 @@ class SessionViewModel extends ChangeNotifier {
   /// Replicates the GUI's session ordering logic for consistency:
   /// 1. Sort by session_id ascending (oldest/lowest ID first)
   /// 2. Assign 1-based position index (Session #1 = lowest session_id)
-  /// 3. Reverse to newest-first for UI display
-  ///
-  /// The GUI does: `sessions.sort((a, b) => a.sessionId.compareTo(b.sessionId))`
-  /// and displays `'Session #${index + 1}'`, so Session #1 = lowest session_id.
   List<SessionAnalysisModel> _applyGuiOrdering(List<SessionAnalysisModel> sessions) {
     if (sessions.isEmpty) return sessions;
 
@@ -111,8 +107,8 @@ class SessionViewModel extends ChangeNotifier {
       indexed.add(sorted[i].copyWith(index: i + 1));
     }
 
-    // Step 3: Reverse so newest (highest index/session_id) appears first in the UI list
-    return indexed.reversed.toList();
+    // رجعنا اللستة معدولة من غير reversed عشان جلسة رقم 1 تظهر أول واحدة فوق
+    return indexed;
   }
 
   /// Detects sessions that transitioned from in_progress → completed since
