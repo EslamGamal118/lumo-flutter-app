@@ -46,17 +46,9 @@ class SessionViewModel extends ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
 
-  /// The currently selected session's full details (from /sessions/{id}).
   SessionAnalysisModel? _sessionDetails;
-
-  /// List of sessions for a patient (from /sessions/list/{id} or /sessions/list).
   List<SessionAnalysisModel> _patientSessions = [];
-
-  /// The session ID of the currently created/active session.
   int? _activeSessionId;
-
-  /// Tracks previous session completion states to detect newly completed sessions.
-  /// Key: session ID, Value: was completed in the last fetch.
   final Map<String, bool> _previousSessionStates = {};
 
   bool get isLoading => _isLoading;
@@ -68,8 +60,6 @@ class SessionViewModel extends ChangeNotifier {
 
   // ── Fetch Session Details ──────────────────────────────────────────────
 
-  /// Loads full session details (emotion/gaze charts, summary, etc.)
-  /// by calling GET /sessions/{id}.
   Future<void> loadSessionDetails(int sessionId) async {
     _isLoading = true;
     _errorMessage = null;
@@ -87,13 +77,9 @@ class SessionViewModel extends ChangeNotifier {
     }
   }
 
-  /// Replicates the GUI's session ordering logic for consistency:
-  /// 1. Sort by session_id ascending (oldest/lowest ID first)
-  /// 2. Assign 1-based position index (Session #1 = lowest session_id)
   List<SessionAnalysisModel> _applyGuiOrdering(List<SessionAnalysisModel> sessions) {
     if (sessions.isEmpty) return sessions;
 
-    // Step 1: Sort ascending by session_id (matching the GUI)
     final sorted = List<SessionAnalysisModel>.from(sessions);
     sorted.sort((a, b) {
       final idA = int.tryParse(a.id) ?? 0;
@@ -101,18 +87,23 @@ class SessionViewModel extends ChangeNotifier {
       return idA.compareTo(idB);
     });
 
-    // Step 2: Assign 1-based position index (Session #1 = oldest/lowest session_id)
     final indexed = <SessionAnalysisModel>[];
     for (int i = 0; i < sorted.length; i++) {
-      indexed.add(sorted[i].copyWith(index: i + 1));
+      final newIndex = i + 1;
+      final original = sorted[i];
+
+      // تصليح مشكلة الـ Title زي ما وضحنا
+      final isDefaultTitle = RegExp(r'^جلسة #\d+$').hasMatch(original.title);
+
+      indexed.add(original.copyWith(
+        index: newIndex,
+        title: isDefaultTitle ? 'جلسة #$newIndex' : original.title, 
+      ));
     }
 
-    // رجعنا اللستة معدولة من غير reversed عشان جلسة رقم 1 تظهر أول واحدة فوق
     return indexed;
   }
 
-  /// Detects sessions that transitioned from in_progress → completed since
-  /// the last fetch and fires a local notification for each one.
   void _detectNewlyCompletedSessions(List<SessionAnalysisModel> sessions) {
     if (!getIt.isRegistered<SharedPreferences>() || !getIt.isRegistered<AuthProvider>()) {
       return;
@@ -132,12 +123,10 @@ class SessionViewModel extends ChangeNotifier {
     final hasSeeded = prefs.getBool(seededKey) ?? false;
 
     if (!hasSeeded) {
-      // First time loading sessions for this user. Just seed the state so we don't spam notifications for old sessions.
       final completedIds = sessions.where((s) => s.isComplete).map((s) => s.id).toList();
       prefs.setStringList(notifiedKey, completedIds);
       prefs.setBool(seededKey, true);
       
-      // Update memory state
       for (final s in sessions) {
         _previousSessionStates[s.id] = s.isComplete;
       }
@@ -148,7 +137,6 @@ class SessionViewModel extends ChangeNotifier {
 
     for (final session in sessions) {
       if (session.isComplete && !notifiedSet.contains(session.id)) {
-        // It's complete and we haven't notified for it!
         debugPrint('🔔 Session #${session.index} (id=${session.id}) just completed!');
         try {
           final notificationService = getIt<NotificationService>();
@@ -168,15 +156,12 @@ class SessionViewModel extends ChangeNotifier {
       prefs.setStringList(notifiedKey, notifiedSet.toList());
     }
 
-    // Update memory state
     _previousSessionStates.clear();
     for (final s in sessions) {
       _previousSessionStates[s.id] = s.isComplete;
     }
   }
 
-  /// Loads all sessions for a patient (doctor's view).
-  /// Calls GET /sessions/list/{patientId}.
   Future<void> loadPatientSessions(int patientId) async {
     _isLoading = true;
     _errorMessage = null;
@@ -197,8 +182,6 @@ class SessionViewModel extends ChangeNotifier {
     }
   }
 
-  /// Loads the logged-in patient's own sessions.
-  /// Calls GET /sessions/list.
   Future<void> loadMySessions() async {
     _isLoading = true;
     _errorMessage = null;
@@ -219,28 +202,26 @@ class SessionViewModel extends ChangeNotifier {
     }
   }
 
-  /// Lazily fetches full details for the most recent completed sessions
-  /// to ensure the Focus Trend Chart has accurate data (as the list API often omits it).
   Future<void> _fetchFullDetailsForChart() async {
     if (_patientSessions.isEmpty) return;
 
     final completedSessions = _patientSessions.where((s) => s.isComplete).toList();
     if (completedSessions.isEmpty) return;
 
-    // Get up to the 20 most recent completed sessions (the ones used in the chart)
     final recentCompleted = completedSessions.take(20).toList();
 
     for (int i = 0; i < recentCompleted.length; i++) {
       final session = recentCompleted[i];
-      // Only fetch if focus is exactly 0.0 (meaning it was missing from the list API)
       if (session.focusedPercentage == 0.0 && session.averageFocus == null) {
         try {
           final fullSession = await _sessionRepository.getSessionDetails(int.parse(session.id));
-          // Replace the summary session with the full session in our list
           final index = _patientSessions.indexWhere((s) => s.id == session.id);
           if (index != -1) {
-            _patientSessions[index] = fullSession.copyWith(index: session.index);
-            notifyListeners(); // Update the UI immediately so the chart redraws
+            _patientSessions[index] = fullSession.copyWith(
+              index: session.index,
+              title: session.title, // الحفاظ على العنوان المحدث
+            );
+            notifyListeners(); 
           }
         } catch (e) {
           debugPrint('Failed to lazy load session details for chart: $e');
@@ -251,7 +232,6 @@ class SessionViewModel extends ChangeNotifier {
 
   // ── Create Session ─────────────────────────────────────────────────────
 
-  /// Creates a new session on the server with segments, then starts the local timer.
   Future<void> createAndStartSession({
     required int patientId,
     required List<SessionPart> parts,
@@ -268,7 +248,6 @@ class SessionViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // 1. Create session on server
       final segments = parts.map((p) => {
         'activity_type': p.getBackendType(p.type),
         'planned_duration': p.durationMinutes,
@@ -282,12 +261,10 @@ class SessionViewModel extends ChangeNotifier {
 
       _activeSessionId = int.tryParse(session.id);
 
-      // 2. Start session on server
       if (_activeSessionId != null) {
         await _sessionRepository.startSession(_activeSessionId!);
       }
 
-      // 3. Start local timer
       _parts = List.from(parts);
       _currentPartIndex = 0;
       _secondsRemainingInPart = _parts[0].durationMinutes * 60;
@@ -305,8 +282,6 @@ class SessionViewModel extends ChangeNotifier {
     }
   }
 
-  /// Creates a new session on the server without starting it.
-  /// The embedded device is responsible for starting the session later.
   Future<void> createSession({
     required int patientId,
     required List<SessionPart> parts,
@@ -351,9 +326,6 @@ class SessionViewModel extends ChangeNotifier {
 
   // ── End Session ────────────────────────────────────────────────────────
 
-  // ── Legacy Aliases (Backwards Compatibility) ───────────────────────────
-
-  /// Alias for createAndStartSession to support existing UI calls.
   Future<void> startSession({
     required int receiverId,
     required List<SessionPart> parts,
@@ -361,7 +333,6 @@ class SessionViewModel extends ChangeNotifier {
     return createSession(patientId: receiverId, parts: parts);
   }
 
-  /// Alias for endCurrentSession to support existing UI calls.
   Future<void> endSession() async {
     return endCurrentSession();
   }
@@ -430,7 +401,6 @@ class SessionViewModel extends ChangeNotifier {
         if (_secondsRemainingInPart > 0) {
           notifyListeners();
         } else {
-          // Move to next part
           if (_currentPartIndex < _parts.length - 1) {
             _currentPartIndex++;
             _secondsRemainingInPart = _parts[_currentPartIndex].durationMinutes * 60;
@@ -438,7 +408,7 @@ class SessionViewModel extends ChangeNotifier {
             _initialSecondsRemaining = _secondsRemainingInPart;
             notifyListeners();
           } else {
-            endCurrentSession(); // All parts completed
+            endCurrentSession(); 
           }
         }
       }
@@ -461,8 +431,6 @@ class SessionViewModel extends ChangeNotifier {
     _activeSessionId = null;
     notifyListeners();
   }
-
-  // ── Cleanup ────────────────────────────────────────────────────────────
 
   void clearError() {
     _errorMessage = null;
